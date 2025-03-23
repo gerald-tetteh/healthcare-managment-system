@@ -22,7 +22,7 @@ public class PatientAuthenticationService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User signUp(RegisterDto registerDto) {
+    public void signUp(RegisterDto registerDto) {
         User user = new User()
                 .setFirstName(registerDto.firstName())
                 .setLastName(registerDto.lastName())
@@ -43,7 +43,7 @@ public class PatientAuthenticationService {
                 .setCity(registerDto.city())
                 .setPostCode(registerDto.postCode())
                 .setJoined(registerDto.joined());
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     public User authenticate(LoginDto loginDto) {
