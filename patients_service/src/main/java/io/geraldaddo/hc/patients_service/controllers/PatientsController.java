@@ -1,0 +1,18 @@
+package io.geraldaddo.hc.patients_service.controllers;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/patients")
+public class PatientsController {
+    Logger logger = LogManager.getLogger(PatientsController.class);
+
+    @GetMapping
+    public String helloWorld() {
+        return "Hello from patients";
+    }
+}

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cd gateway
+./mvnw clean package
+cd ../patients_service
+./mvnw clean package
+
+cd..
+docker compose up --build

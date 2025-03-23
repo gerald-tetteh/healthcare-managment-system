@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: patients-service
+
+  datasource:
+    url: jdbc:postgresql://users-db:5432/${db_name}
+    username: ${db_user}
+    password: ${db_password}
+
+server:
+  port: ${port}

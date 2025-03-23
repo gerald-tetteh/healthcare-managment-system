@@ -1,0 +1,45 @@
+name: Healthcare Management System
+
+services:
+  gateway:
+    container_name: gateway-service
+    build:
+      context: gateway
+    ports:
+      - 8080:8080
+    environment:
+      - db_name=usersDB
+      - db_password=users
+      - db_user=usersAdmin
+      - port=8080
+      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
+    networks:
+      - gateway-service-network
+    depends_on:
+      - users-db
+  patients-service:
+    container_name: patients-service
+    build:
+      context: patients_service
+    environment:
+      - db_name=usersDB
+      - db_password=users
+      - db_user=usersAdmin
+      - port=8081
+    networks:
+      - gateway-service-network
+
+  users-db:
+    image: postgres:17.4
+    container_name: users-db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=users
+      - POSTGRES_DB=usersDB
+      - POSTGRES_USER=usersAdmin
+    networks:
+      - gateway-service-network
+
+networks:
+  gateway-service-network:
