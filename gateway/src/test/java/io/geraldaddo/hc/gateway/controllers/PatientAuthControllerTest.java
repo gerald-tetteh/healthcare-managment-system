@@ -2,7 +2,6 @@ package io.geraldaddo.hc.gateway.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.geraldaddo.hc.gateway.GatewayApplication;
 import io.geraldaddo.hc.gateway.configurations.TestSecurityConfiguration;
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
 import io.geraldaddo.hc.gateway.dtos.RegisterDto;
@@ -27,7 +26,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PatientAuthController.class)
-@Import({TestSecurityConfiguration.class, GatewayApplication.class})
+@Import({TestSecurityConfiguration.class})
 class PatientAuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
