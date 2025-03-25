@@ -1,9 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
-cd gateway
-./mvnw -DskipTests clean package
-cd ../patients_service
-./mvnw -DskipTests clean package
-
-cd..
+./mvnw -DskipTests clean  package
 docker compose up --build

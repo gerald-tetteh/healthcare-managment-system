@@ -2,9 +2,9 @@ package io.geraldaddo.hc.gateway.services;
 
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
 import io.geraldaddo.hc.gateway.dtos.RegisterDto;
-import io.geraldaddo.hc.gateway.entities.User;
-import io.geraldaddo.hc.gateway.enums.Role;
-import io.geraldaddo.hc.gateway.repositories.UserRepository;
+import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.user_data_module.enums.Role;
+import io.geraldaddo.hc.user_data_module.repositories.UserRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.AuthenticationManager;

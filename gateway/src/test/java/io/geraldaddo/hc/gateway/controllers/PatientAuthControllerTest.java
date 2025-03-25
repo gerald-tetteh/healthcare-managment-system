@@ -2,12 +2,13 @@ package io.geraldaddo.hc.gateway.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.geraldaddo.hc.gateway.GatewayApplication;
 import io.geraldaddo.hc.gateway.configurations.TestSecurityConfiguration;
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
 import io.geraldaddo.hc.gateway.dtos.RegisterDto;
-import io.geraldaddo.hc.gateway.entities.User;
 import io.geraldaddo.hc.gateway.services.JwtService;
 import io.geraldaddo.hc.gateway.services.PatientAuthenticationService;
+import io.geraldaddo.hc.user_data_module.entities.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PatientAuthController.class)
-@Import({TestSecurityConfiguration.class})
+@Import({TestSecurityConfiguration.class, GatewayApplication.class})
 class PatientAuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -59,6 +60,8 @@ class PatientAuthControllerTest {
                 "United Kingdom",
                 LocalDateTime.parse("2022-03-15T02:30:25")
         );
+        when(patientAuthenticationService.signUp(registerDto))
+                .thenReturn(new User().setUserId(0));
         mockMvc.perform(post("/auth/patient/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(registerDto)))

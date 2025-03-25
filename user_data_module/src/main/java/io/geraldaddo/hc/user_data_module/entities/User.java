@@ -1,7 +1,7 @@
-package io.geraldaddo.hc.gateway.entities;
+package io.geraldaddo.hc.user_data_module.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import io.geraldaddo.hc.gateway.enums.Role;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;

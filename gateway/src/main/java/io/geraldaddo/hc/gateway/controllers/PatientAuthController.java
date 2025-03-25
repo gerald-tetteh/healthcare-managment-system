@@ -3,7 +3,7 @@ package io.geraldaddo.hc.gateway.controllers;
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
 import io.geraldaddo.hc.gateway.dtos.LoginResponseDto;
 import io.geraldaddo.hc.gateway.dtos.RegisterDto;
-import io.geraldaddo.hc.gateway.entities.User;
+import io.geraldaddo.hc.user_data_module.entities.User;
 import io.geraldaddo.hc.gateway.services.JwtService;
 import io.geraldaddo.hc.gateway.services.PatientAuthenticationService;
 import org.apache.logging.log4j.LogManager;

@@ -1,6 +1,6 @@
 package io.geraldaddo.hc.gateway.configurations;
 
-import io.geraldaddo.hc.gateway.repositories.UserRepository;
+import io.geraldaddo.hc.user_data_module.repositories.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

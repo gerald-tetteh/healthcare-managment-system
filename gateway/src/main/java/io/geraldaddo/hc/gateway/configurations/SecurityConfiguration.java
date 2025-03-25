@@ -1,6 +1,6 @@
 package io.geraldaddo.hc.gateway.configurations;
 
-import io.geraldaddo.hc.gateway.enums.Role;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;

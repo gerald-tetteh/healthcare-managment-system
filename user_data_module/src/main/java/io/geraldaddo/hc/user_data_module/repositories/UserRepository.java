@@ -1,6 +1,6 @@
-package io.geraldaddo.hc.gateway.repositories;
+package io.geraldaddo.hc.user_data_module.repositories;
 
-import io.geraldaddo.hc.gateway.entities.User;
+import io.geraldaddo.hc.user_data_module.entities.User;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
