@@ -5,13 +5,18 @@ import io.geraldaddo.hc.gateway.dtos.RegisterDto;
 import io.geraldaddo.hc.gateway.entities.User;
 import io.geraldaddo.hc.gateway.enums.Role;
 import io.geraldaddo.hc.gateway.repositories.UserRepository;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class PatientAuthenticationService {
+    private final Logger logger = LogManager.getLogger(PatientAuthenticationService.class);
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
@@ -22,7 +27,7 @@ public class PatientAuthenticationService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public void signUp(RegisterDto registerDto) {
+    public User signUp(RegisterDto registerDto) {
         User user = new User()
                 .setFirstName(registerDto.firstName())
                 .setLastName(registerDto.lastName())
@@ -30,7 +35,7 @@ public class PatientAuthenticationService {
                 .setDateOfBirth(registerDto.dateOfBirth())
                 .setNumber(registerDto.number())
                 .setActive(true)
-                .setRole(Role.PATIENT)
+                .setRoles(List.of(Role.PATIENT))
                 .setEmergencyFirstName(registerDto.emergencyFirstName())
                 .setEmergencyLastName(registerDto.emergencyLastName())
                 .setEmergencyNumber(registerDto.emergencyNumber())
@@ -43,7 +48,7 @@ public class PatientAuthenticationService {
                 .setCity(registerDto.city())
                 .setPostCode(registerDto.postCode())
                 .setJoined(registerDto.joined());
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     public User authenticate(LoginDto loginDto) {

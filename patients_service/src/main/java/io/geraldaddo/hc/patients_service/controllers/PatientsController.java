@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/patients")
 public class PatientsController {
-    Logger logger = LogManager.getLogger(PatientsController.class);
+    private final Logger logger = LogManager.getLogger(PatientsController.class);
 
     @GetMapping
     public String helloWorld() {

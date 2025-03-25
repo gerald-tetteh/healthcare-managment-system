@@ -7,13 +7,12 @@ import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -36,9 +35,10 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @ColumnDefault("true")
     private boolean active;
-    @Column(nullable = false)
-    @Enumerated
-    private Role role;
+    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
+    @CollectionTable(name = "roles", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role", nullable = false)
+    private List<Role> roles;
     @Column(nullable = false)
     private String emergencyFirstName;
     @Column(nullable = false)
@@ -87,7 +87,9 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .toList();
     }
 
     @Override
@@ -178,12 +180,12 @@ public class User implements UserDetails {
         return this;
     }
 
-    public Role getRole() {
-        return role;
+    public List<Role> getRoles() {
+        return roles;
     }
 
-    public User setRole(Role role) {
-        this.role = role;
+    public User setRoles(List<Role> roles) {
+        this.roles = roles;
         return this;
     }
 

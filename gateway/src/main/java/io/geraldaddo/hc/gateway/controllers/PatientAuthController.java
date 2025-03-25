@@ -6,6 +6,8 @@ import io.geraldaddo.hc.gateway.dtos.RegisterDto;
 import io.geraldaddo.hc.gateway.entities.User;
 import io.geraldaddo.hc.gateway.services.JwtService;
 import io.geraldaddo.hc.gateway.services.PatientAuthenticationService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth/patient")
 public class PatientAuthController {
+    private final Logger logger = LogManager.getLogger(PatientAuthController.class);
     private final JwtService jwtService;
     private final PatientAuthenticationService patientAuthenticationService;
 
@@ -29,7 +32,8 @@ public class PatientAuthController {
 
     @PostMapping("/register")
     public ResponseEntity<HttpStatus> register(@RequestBody RegisterDto registerDto) {
-        patientAuthenticationService.signUp(registerDto);
+        User user = patientAuthenticationService.signUp(registerDto);
+        logger.info(String.format("created new patient record: %d", user.getUserId()));
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
@@ -41,6 +45,7 @@ public class PatientAuthController {
         claims.put("userId", user.getUserId());
         String token = jwtService.buildToken(claims, user);
         LoginResponseDto loginResponseDto = new LoginResponseDto(token);
+        logger.info(String.format("user %d logged in", user.getUserId()));
         return ResponseEntity.ok(loginResponseDto);
     }
 }
