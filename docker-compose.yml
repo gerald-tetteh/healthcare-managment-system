@@ -27,6 +27,8 @@ services:
       - db_password=users
       - db_user=usersAdmin
       - port=8081
+      #      test key
+      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
     networks:
       - gateway-service-network
 

@@ -19,6 +19,7 @@
         <module>gateway</module>
         <module>patients_service</module>
         <module>user_data_module</module>
+        <module>security_module</module>
     </modules>
 
     <properties>

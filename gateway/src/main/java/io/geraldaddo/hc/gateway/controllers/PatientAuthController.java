@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +44,7 @@ public class PatientAuthController {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("userId", user.getUserId());
+        claims.put("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList());
         String token = jwtService.buildToken(claims, user);
         LoginResponseDto loginResponseDto = new LoginResponseDto(token);
         logger.info(String.format("user %d logged in", user.getUserId()));

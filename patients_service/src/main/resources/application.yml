@@ -7,5 +7,10 @@ spring:
     username: ${db_user}
     password: ${db_password}
 
+jwt:
+  secret-key: ${secret_key}
+  # 4 hours
+  expiration-time: 14400000
+
 server:
   port: ${port}
