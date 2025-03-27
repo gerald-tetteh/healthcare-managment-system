@@ -47,7 +47,7 @@ public class User implements UserDetails {
     private String emergencyNumber;
     @Column(nullable = false)
     private String password;
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
     @Column(nullable = false)
     private String addressLineOne;
@@ -61,6 +61,8 @@ public class User implements UserDetails {
     private String postCode;
     @Column(nullable = false)
     private String country;
+    @Column
+    private String insuranceNumber;
     @Column(nullable = false)
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime joined;
