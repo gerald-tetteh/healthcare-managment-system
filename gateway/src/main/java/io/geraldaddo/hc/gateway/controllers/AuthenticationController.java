@@ -1,11 +1,13 @@
 package io.geraldaddo.hc.gateway.controllers;
 
+import io.geraldaddo.hc.gateway.dtos.DoctorRegisterDto;
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
 import io.geraldaddo.hc.gateway.dtos.LoginResponseDto;
-import io.geraldaddo.hc.gateway.dtos.RegisterDto;
-import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.gateway.dtos.PatientRegisterDto;
+import io.geraldaddo.hc.gateway.services.AuthenticationService;
 import io.geraldaddo.hc.gateway.services.JwtService;
-import io.geraldaddo.hc.gateway.services.PatientAuthenticationService;
+import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
+import io.geraldaddo.hc.user_data_module.entities.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
@@ -20,27 +22,34 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/auth/patient")
-public class PatientAuthController {
-    private final Logger logger = LogManager.getLogger(PatientAuthController.class);
+@RequestMapping("/auth")
+public class AuthenticationController {
+    private final Logger logger = LogManager.getLogger(AuthenticationController.class);
     private final JwtService jwtService;
-    private final PatientAuthenticationService patientAuthenticationService;
+    private final AuthenticationService authenticationService;
 
-    public PatientAuthController(JwtService jwtService, PatientAuthenticationService patientAuthenticationService) {
+    public AuthenticationController(JwtService jwtService, AuthenticationService authenticationService) {
         this.jwtService = jwtService;
-        this.patientAuthenticationService = patientAuthenticationService;
+        this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<HttpStatus> register(@RequestBody RegisterDto registerDto) {
-        User user = patientAuthenticationService.signUp(registerDto);
+    @PostMapping("/patient/register")
+    public ResponseEntity<HttpStatus> register(@RequestBody PatientRegisterDto patientRegisterDto) {
+        User user = authenticationService.patientSignUp(patientRegisterDto);
         logger.info(String.format("created new patient record: %d", user.getUserId()));
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PostMapping("/doctor/register")
+    public ResponseEntity<HttpStatus> register(@RequestBody DoctorRegisterDto doctorRegisterDto) {
+        DoctorProfile profile = authenticationService.doctorSignUp(doctorRegisterDto);
+        logger.info(String.format("created new doctor record: %d", profile.getUserProfile().getUserId()));
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto) {
-        User user = patientAuthenticationService.authenticate(loginDto);
+        User user = authenticationService.authenticate(loginDto);
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("userId", user.getUserId());

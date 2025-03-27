@@ -1,6 +1,7 @@
 package io.geraldaddo.hc.user_data_module.attribute_converters;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.user_data_module.entities.Availability;
@@ -22,30 +23,18 @@ public class AvailabilityConverter implements AttributeConverter<List<Availabili
         try {
             return mapper.writeValueAsString(availability);
         } catch (JsonProcessingException e) {
-            logger.error("Failed to convert availability to json. Availability: " + availability);
+            logger.error("Failed to convert availability to json. Availability: " + availability, e);
             throw new JsonConvertException("Failed to convert Availability to json", e);
         }
     }
 
     @Override
     public List<Availability> convertToEntityAttribute(String s) {
-        List<?> availability = null;
         try {
-            availability = mapper.readValue(s, List.class);
+            return mapper.readValue(s, new TypeReference<List<Availability>>() {});
         } catch (JsonProcessingException e) {
-            logger.error("Failed to convert json to Availability. json: " + s);
+            logger.error("Failed to convert json to Availability. json: " + s, e);
             throw new JsonConvertException("Failed to convert json to Availability", e);
         }
-        return availability.stream()
-                .map(Object::toString)
-                .map(json -> {
-                     try {
-                         return mapper.readValue(json, Availability.class);
-                     } catch (JsonProcessingException e) {
-                         logger.error("Failed to convert json to Availability. json: " + s);
-                         throw new JsonConvertException("Failed to convert json to Availability", e);
-                     }
-                 })
-                .toList();
     }
 }

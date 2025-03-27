@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.gateway.configurations.TestSecurityConfiguration;
 import io.geraldaddo.hc.gateway.dtos.LoginDto;
-import io.geraldaddo.hc.gateway.dtos.RegisterDto;
+import io.geraldaddo.hc.gateway.dtos.PatientRegisterDto;
 import io.geraldaddo.hc.gateway.services.JwtService;
-import io.geraldaddo.hc.gateway.services.PatientAuthenticationService;
+import io.geraldaddo.hc.gateway.services.AuthenticationService;
 import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -20,27 +21,28 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(PatientAuthController.class)
+@WebMvcTest(AuthenticationController.class)
 @Import({TestSecurityConfiguration.class})
-class PatientAuthControllerTest {
+class AuthenticationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    PatientAuthenticationService patientAuthenticationService;
+    AuthenticationService authenticationService;
     @MockitoBean
     JwtService jwtService;
 
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
-    void shouldRegisterSuccessfully() throws Exception {
-        RegisterDto registerDto = new RegisterDto(
+    void shouldRegisterPatientSuccessfully() throws Exception {
+        PatientRegisterDto patientRegisterDto = new PatientRegisterDto(
                 "Gerald",
                 "Addo-Tetteh",
                 24,
@@ -59,26 +61,27 @@ class PatientAuthControllerTest {
                 "United Kingdom",
                 LocalDateTime.parse("2022-03-15T02:30:25")
         );
-        when(patientAuthenticationService.signUp(registerDto))
+        when(authenticationService.patientSignUp(patientRegisterDto))
                 .thenReturn(new User().setUserId(0));
         mockMvc.perform(post("/auth/patient/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(mapper.writeValueAsString(registerDto)))
+                .content(mapper.writeValueAsString(patientRegisterDto)))
                 .andExpect(status().isOk());
-        verify(patientAuthenticationService, times(1)).signUp(registerDto);
+        verify(authenticationService, times(1)).patientSignUp(patientRegisterDto);
     }
 
     @Test
     void shouldLoginSuccessfully() throws Exception {
         LoginDto loginDto = new LoginDto("test@example.com","examplePassword");
-        when(patientAuthenticationService.authenticate(loginDto)).thenReturn(
+        when(authenticationService.authenticate(loginDto)).thenReturn(
                 new User()
                         .setEmail(loginDto.email())
                         .setPassword(loginDto.password())
+                        .setRoles(List.of(Role.PATIENT))
         );
         when(jwtService.buildToken(anyMap(),any(UserDetails.class))).thenReturn("sampleToken4Test");
 
-        mockMvc.perform(post("/auth/patient/login")
+        mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(loginDto)))
                 .andExpect(status().isOk())
@@ -86,21 +89,21 @@ class PatientAuthControllerTest {
                 .andExpect(jsonPath("$.token").exists())
                 .andExpect(jsonPath("$.token").value("sampleToken4Test"));
 
-        verify(patientAuthenticationService, times(1)).authenticate(loginDto);
+        verify(authenticationService, times(1)).authenticate(loginDto);
         verify(jwtService, times(1)).buildToken(anyMap(),any(UserDetails.class));
     }
 
     @Test
     void shouldReturnErrorMessageForFailedLogin() throws Exception {
         LoginDto loginDto = new LoginDto("test@example.com","examplePassword");
-        when(patientAuthenticationService.authenticate(loginDto)).thenThrow(new AuthenticationException("Test authentication failure") {
+        when(authenticationService.authenticate(loginDto)).thenThrow(new AuthenticationException("Test authentication failure") {
             @Override
             public String getMessage() {
                 return super.getMessage();
             }
         });
 
-        mockMvc.perform(post("/auth/patient/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(loginDto)))
                 .andExpect(status().isUnauthorized())
@@ -111,7 +114,7 @@ class PatientAuthControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.statusCode").exists());
 
-        verify(patientAuthenticationService, times(1)).authenticate(loginDto);
+        verify(authenticationService, times(1)).authenticate(loginDto);
         verify(jwtService, times(0)).buildToken(anyMap(),any());
     }
 }
