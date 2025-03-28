@@ -21,6 +21,7 @@ public record DoctorRegisterDto(
         String addressLineOne,
         String addressLineTwo,
         String county,
+        String insuranceNumber,
         String city,
         String postCode,
         String country,

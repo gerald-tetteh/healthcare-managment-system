@@ -264,6 +264,15 @@ public class User implements UserDetails {
         return this;
     }
 
+    public String getInsuranceNumber() {
+        return insuranceNumber;
+    }
+
+    public User setInsuranceNumber(String insuranceNumber) {
+        this.insuranceNumber = insuranceNumber;
+        return this;
+    }
+
     public String getCity() {
         return city;
     }
