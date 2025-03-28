@@ -14,3 +14,7 @@ jwt:
 
 server:
   port: ${port}
+
+logging:
+  level:
+    org.springframework: TRACE
