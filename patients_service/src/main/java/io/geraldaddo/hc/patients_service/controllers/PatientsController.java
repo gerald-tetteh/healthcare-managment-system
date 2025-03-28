@@ -6,12 +6,10 @@ import io.geraldaddo.hc.user_data_module.entities.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/patients")
@@ -25,6 +23,10 @@ public class PatientsController {
     @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
     public ResponseEntity<UserProfileDto> getUserProfile(@PathVariable int id) {
         User user = patientsService.getUserById(id);
+        if(!user.isActive()) {
+            logger.warn("Tried to access deactivated user: " +  id);
+            throw new IllegalArgumentException("User with id: " + id + "does not exits.");
+        }
         UserProfileDto dto = new UserProfileDto()
                 .setFirstName(user.getFirstName())
                 .setLastName(user.getLastName())
@@ -44,5 +46,13 @@ public class PatientsController {
                 .setJoined(user.getJoined())
                 .setInsuranceNumber(user.getInsuranceNumber());
         return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
+    public ResponseEntity<HttpStatus> deleteUser(@PathVariable int id) {
+        patientsService.deactivateUser(id);
+        logger.info(String.format("User: $d's account deactivated", id));
+        return ResponseEntity.ok(HttpStatus.OK);
     }
 }

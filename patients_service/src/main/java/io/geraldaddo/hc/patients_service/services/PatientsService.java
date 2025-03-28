@@ -14,4 +14,10 @@ public class PatientsService {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User with id: " + id + "does not exits."));
     }
+
+    public void deactivateUser(int id) {
+        User user = getUserById(id);
+        user.setActive(false);
+        userRepository.save(user);
+    }
 }
