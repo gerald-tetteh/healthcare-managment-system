@@ -27,7 +27,30 @@ public class PatientsController {
             logger.warn("Tried to access deactivated user: " +  id);
             throw new IllegalArgumentException("User with id: " + id + "does not exits.");
         }
-        UserProfileDto dto = new UserProfileDto()
+        UserProfileDto dto = buildProfileDto(user);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
+    public ResponseEntity<HttpStatus> deleteUser(@PathVariable int id) {
+        patientsService.deactivateUser(id);
+        logger.info(String.format("User: %d's account deactivated", id));
+        return ResponseEntity.ok(HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
+    public ResponseEntity<UserProfileDto> updateUser(
+            @PathVariable int id, @RequestBody UserProfileDto userProfileDto) {
+        User user = patientsService.updateUser(id, userProfileDto);
+        logger.info(String.format("User: %d's updated account details", id));
+        UserProfileDto dto = buildProfileDto(user);
+        return ResponseEntity.ok(dto);
+    }
+
+    private UserProfileDto buildProfileDto(User user) {
+        return new UserProfileDto()
                 .setFirstName(user.getFirstName())
                 .setLastName(user.getLastName())
                 .setAge(user.getAge())
@@ -45,14 +68,5 @@ public class PatientsController {
                 .setPostCode(user.getPostCode())
                 .setJoined(user.getJoined())
                 .setInsuranceNumber(user.getInsuranceNumber());
-        return ResponseEntity.ok(dto);
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
-    public ResponseEntity<HttpStatus> deleteUser(@PathVariable int id) {
-        patientsService.deactivateUser(id);
-        logger.info(String.format("User: $d's account deactivated", id));
-        return ResponseEntity.ok(HttpStatus.OK);
     }
 }
