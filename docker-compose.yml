@@ -31,6 +31,23 @@ services:
       - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
     networks:
       - gateway-service-network
+    depends_on:
+      - users-db
+  doctors-service:
+    container_name: doctors-service
+    build:
+      context: doctors_service
+    environment:
+      - db_name=usersDB
+      - db_password=users
+      - db_user=usersAdmin
+      - port=8082
+      #      test key
+      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
+    networks:
+      - gateway-service-network
+    depends_on:
+      - users-db
 
   users-db:
     image: postgres:17.4
