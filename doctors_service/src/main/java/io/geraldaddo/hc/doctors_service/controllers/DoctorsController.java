@@ -26,6 +26,7 @@ public class DoctorsController {
     @GetMapping("/{id}/availability")
     @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
     public ResponseEntity<List<Availability>> getAvailability(@PathVariable int id) {
-        return ResponseEntity.ok(doctorsService.getAvailability(id));
+        List<Availability> availabilities = doctorsService.getAvailability(id);
+        return ResponseEntity.ok(availabilities);
     }
 }

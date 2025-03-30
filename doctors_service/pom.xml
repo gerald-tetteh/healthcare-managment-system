@@ -36,6 +36,12 @@
     <dependencies>
         <dependency>
             <groupId>io.geraldaddo.hc</groupId>
+            <artifactId>cache_module</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.geraldaddo.hc</groupId>
             <artifactId>user_data_module</artifactId>
             <version>${project.parent.version}</version>
             <scope>compile</scope>

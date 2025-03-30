@@ -48,6 +48,7 @@ services:
       - gateway-service-network
     depends_on:
       - users-db
+      - redis-server
 
   users-db:
     image: postgres:17.4
@@ -58,6 +59,11 @@ services:
       - POSTGRES_PASSWORD=users
       - POSTGRES_DB=usersDB
       - POSTGRES_USER=usersAdmin
+    networks:
+      - gateway-service-network
+  redis-server:
+    image: redis:8.0-M04-alpine
+    container_name: redis-server
     networks:
       - gateway-service-network
 

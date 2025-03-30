@@ -15,6 +15,6 @@ jwt:
 server:
   port: ${port}
 
-#logging:
-#  level:
-#    org.springframework: TRACE
+logging:
+  level:
+    org.springframework: TRACE

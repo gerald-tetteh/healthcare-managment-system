@@ -21,6 +21,7 @@
         <module>user_data_module</module>
         <module>security_module</module>
         <module>doctors_service</module>
+        <module>cache_module</module>
     </modules>
 
     <properties>
@@ -38,6 +39,14 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
         <dependency>
