@@ -25,7 +25,7 @@ public class PatientsController {
         User user = patientsService.getUserById(id);
         if(!user.isActive()) {
             logger.warn("Tried to access deactivated user: " +  id);
-            throw new IllegalArgumentException("User with id: " + id + "does not exits.");
+            throw new IllegalArgumentException("User with id: " + id + " does not exits.");
         }
         UserProfileDto dto = buildProfileDto(user);
         return ResponseEntity.ok(dto);

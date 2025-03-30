@@ -24,6 +24,9 @@ public class PatientsService {
 
     public User updateUser(int id, UserProfileDto userProfileDto) {
         User user = getUserById(id);
+        if(!user.isActive()) {
+            throw new IllegalArgumentException("User with id: " + id + "does not exits.");
+        }
         user.setFirstName(userProfileDto.getFirstName())
                 .setLastName(userProfileDto.getLastName())
                 .setAge(userProfileDto.getAge())
