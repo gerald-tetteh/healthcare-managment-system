@@ -11,7 +11,6 @@ import io.geraldaddo.hc.gateway.services.JwtService;
 import io.geraldaddo.hc.user_data_module.entities.Availability;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
 import io.geraldaddo.hc.user_data_module.entities.User;
-import io.geraldaddo.hc.user_data_module.enums.DayOfWeek;
 import io.geraldaddo.hc.user_data_module.enums.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
