@@ -2,6 +2,7 @@ package io.geraldaddo.hc.doctors_service.services;
 
 import io.geraldaddo.hc.doctors_service.configurations.DoctorsServiceTestConfiguration;
 import io.geraldaddo.hc.doctors_service.dto.DoctorsAvailabilityDto;
+import io.geraldaddo.hc.doctors_service.dto.UpdateDoctorProfileDto;
 import io.geraldaddo.hc.doctors_service.entities.CurrentStatus;
 import io.geraldaddo.hc.user_data_module.entities.Availability;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
@@ -21,6 +22,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(SpringExtension.class)
@@ -41,21 +44,26 @@ class DoctorsServiceTest {
                     LocalTime.parse("22:00:00"),
                     DayOfWeek.WEDNESDAY)
     );
-    final DoctorProfile doctorProfile = new DoctorProfile()
-            .setProfileId(0L)
-            .setAvailabilityList(availability)
-            .setConsultationFee(453.93)
-            .setSpecialisation("Brain Surgery")
-            .setLicenseNumber("234-292-494")
-            .setUserProfile(new User().setActive(true));
+    DoctorProfile doctorProfile = null;
 
     @BeforeEach
     void setUp() {
+        doctorProfile = new DoctorProfile()
+                .setProfileId(0L)
+                .setAvailabilityList(availability)
+                .setConsultationFee(453.93)
+                .setSpecialisation("Brain Surgery")
+                .setLicenseNumber("234-292-494")
+                .setUserProfile(new User().setActive(true));
         when(profileRepository.findByUserId(0)).thenReturn(Optional.of(doctorProfile));
     }
 
     @Test
-    void getProfile() {
+    void shouldThrowExceptionWhenGettingInActiveUserProfile() {
+        doctorProfile.getUserProfile().setActive(false);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> doctorsService.getProfile(0));
+        assertEquals(exception.getMessage(), "Profile: 0 does not exist");
     }
 
     @Test
@@ -82,5 +90,18 @@ class DoctorsServiceTest {
 
         assert(availability.getCurrentStatus() == CurrentStatus.AVAILABLE);
         verify(profileRepository,times(1)).findByUserId(0);
+    }
+
+    @Test
+    void testShouldUpdateDoctorProfile() {
+        UpdateDoctorProfileDto updateDoctorProfileDto = UpdateDoctorProfileDto.builder()
+                .specialisation("Radiologist")
+                .consultationFee(doctorProfile.getConsultationFee())
+                .licenseNumber(doctorProfile.getLicenseNumber())
+                .availabilityList(doctorProfile.getAvailabilityList())
+                .build();
+        doctorsService.updateProfile(0, updateDoctorProfileDto);
+
+        verify(profileRepository, times(1)).save(any(DoctorProfile.class));
     }
 }

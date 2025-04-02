@@ -39,11 +39,19 @@ public class CacheConfiguration {
                         .allowIfSubType(Object.class).build(),
                         ObjectMapper.DefaultTyping.NON_FINAL,
                         JsonTypeInfo.As.PROPERTY);
-        return builder -> builder.withCacheConfiguration("availability",
+        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration
+                .defaultCacheConfig()
+                .entryTtl(Duration.ofHours(1))
+                .disableCachingNullValues()
+                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                        .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
+        return builder -> builder
+                .withCacheConfiguration("availability",
                         RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofSeconds(15))
                                 .disableCachingNullValues()
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                                        .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper))));
+                                        .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper))))
+                .withCacheConfiguration("doctor_profile", defaultConfig);
     }
 }
