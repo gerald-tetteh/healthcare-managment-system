@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/doctors")
 public class DoctorsController {
@@ -24,6 +26,6 @@ public class DoctorsController {
     @GetMapping("/{id}/availability")
     @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
     public ResponseEntity<DoctorsAvailabilityDto> getAvailability(@PathVariable int id) {
-        return ResponseEntity.ok(doctorsService.getAvailability(id));
+        return ResponseEntity.ok(doctorsService.getAvailability(id, LocalDateTime.now()));
     }
 }

@@ -29,20 +29,19 @@ public class DoctorsService {
     }
 
     @Cacheable(value = "availability", key = "#id")
-    public DoctorsAvailabilityDto getAvailability(int id) {
+    public DoctorsAvailabilityDto getAvailability(int id, LocalDateTime today) {
         DoctorProfile profile = getProfile(id);
         if(!profile.getUserProfile().isActive()) {
             throw new IllegalArgumentException(String.format("Profile: %d does not exits", id));
         }
         List<Availability> availability = profile.getAvailabilityList();
         return DoctorsAvailabilityDto.builder()
-                .currentStatus(getCurrentStatus(availability))
+                .currentStatus(getCurrentStatus(availability, today))
                 .availability(availability)
                 .build();
     }
 
-    private CurrentStatus getCurrentStatus(List<Availability> availability) {
-        LocalDateTime today = LocalDateTime.now();
+    private CurrentStatus getCurrentStatus(List<Availability> availability, LocalDateTime today) {
         DayOfWeek dayOfWeek = today.getDayOfWeek();
         Stream<Availability> todayAvailability = availability.stream()
                 .filter(av -> av.dayOfWeek().equals(dayOfWeek));
