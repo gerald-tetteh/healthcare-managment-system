@@ -1,9 +1,14 @@
 package io.geraldaddo.hc.user_data_module.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.geraldaddo.hc.user_data_module.attribute_converters.RolesConverter;
 import io.geraldaddo.hc.user_data_module.enums.Role;
 import io.geraldaddo.hc.user_data_module.enums.Sex;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,11 +19,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User implements UserDetails {
     @Id
     @GeneratedValue
@@ -38,10 +46,9 @@ public class User implements UserDetails {
     @Column(nullable = false)
     @ColumnDefault("true")
     private boolean active;
-    @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
-    @CollectionTable(name = "roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "role", nullable = false)
-    private List<Role> roles;
+    @Column(nullable = false)
+    @Convert(converter = RolesConverter.class)
+    private Set<Role> roles;
     @Column(nullable = false)
     private String emergencyFirstName;
     @Column(nullable = false)
@@ -93,9 +100,10 @@ public class User implements UserDetails {
     }
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .toList();
     }
 
@@ -187,11 +195,11 @@ public class User implements UserDetails {
         return this;
     }
 
-    public List<Role> getRoles() {
+    public Set<Role> getRoles() {
         return roles;
     }
 
-    public User setRoles(List<Role> roles) {
+    public User setRoles(Set<Role> roles) {
         this.roles = roles;
         return this;
     }
