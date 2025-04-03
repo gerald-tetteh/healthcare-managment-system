@@ -2,6 +2,7 @@ package io.geraldaddo.hc.user_data_module.entities;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.geraldaddo.hc.user_data_module.enums.Role;
+import io.geraldaddo.hc.user_data_module.enums.Sex;
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,7 +13,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -63,6 +66,8 @@ public class User implements UserDetails {
     private String country;
     @Column
     private String insuranceNumber;
+    @Column(nullable = false)
+    private Sex sex;
     @Column(nullable = false)
     @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime joined;
@@ -270,6 +275,15 @@ public class User implements UserDetails {
 
     public User setInsuranceNumber(String insuranceNumber) {
         this.insuranceNumber = insuranceNumber;
+        return this;
+    }
+
+    public Sex getSex() {
+        return this.sex;
+    }
+
+    public User setSex(Sex sex) {
+        this.sex = sex;
         return this;
     }
 

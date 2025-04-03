@@ -67,6 +67,7 @@ public class PatientsController {
                 .setEmergencyNumber(user.getEmergencyNumber())
                 .setPostCode(user.getPostCode())
                 .setJoined(user.getJoined())
-                .setInsuranceNumber(user.getInsuranceNumber());
+                .setInsuranceNumber(user.getInsuranceNumber())
+                .setSex(user.getSex());
     }
 }

@@ -59,6 +59,7 @@ public class DoctorsController {
                 .postCode(profile.getUserProfile().getPostCode())
                 .joined(profile.getUserProfile().getJoined())
                 .insuranceNumber(profile.getUserProfile().getInsuranceNumber())
+                .sex(profile.getUserProfile().getSex())
                 .build();
         return DoctorProfileDto.builder()
                 .consultationFee(profile.getConsultationFee())

@@ -1,5 +1,6 @@
 package io.geraldaddo.hc.doctors_service.dto;
 
+import io.geraldaddo.hc.user_data_module.enums.Sex;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ public class UserProfileDto {
     private String addressLineTwo;
     private String county;
     private String insuranceNumber;
+    private Sex sex;
     private String city;
     private String postCode;
     private String country;

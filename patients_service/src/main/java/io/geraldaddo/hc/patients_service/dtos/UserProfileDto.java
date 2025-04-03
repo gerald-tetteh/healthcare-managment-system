@@ -1,5 +1,7 @@
 package io.geraldaddo.hc.patients_service.dtos;
 
+import io.geraldaddo.hc.user_data_module.enums.Sex;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,6 +19,7 @@ public class UserProfileDto {
     private String addressLineTwo;
     private String county;
     private String insuranceNumber;
+    private Sex sex;
     private String city;
     private String postCode;
     private String country;
@@ -72,6 +75,10 @@ public class UserProfileDto {
 
     public String getInsuranceNumber() {
         return insuranceNumber;
+    }
+
+    public Sex getSex() {
+        return sex;
     }
 
     public String getCity() {
@@ -152,6 +159,11 @@ public class UserProfileDto {
 
     public UserProfileDto setInsuranceNumber(String insuranceNumber) {
         this.insuranceNumber = insuranceNumber;
+        return this;
+    }
+
+    public UserProfileDto setSex(Sex sex) {
+        this.sex = sex;
         return this;
     }
 
