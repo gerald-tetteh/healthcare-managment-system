@@ -3,6 +3,7 @@ package io.geraldaddo.hc.doctors_service.services;
 import io.geraldaddo.hc.doctors_service.configurations.DoctorsServiceTestConfiguration;
 import io.geraldaddo.hc.doctors_service.dto.DoctorsAvailabilityDto;
 import io.geraldaddo.hc.doctors_service.dto.UpdateDoctorProfileDto;
+import io.geraldaddo.hc.doctors_service.dto.UserProfileDto;
 import io.geraldaddo.hc.doctors_service.entities.CurrentStatus;
 import io.geraldaddo.hc.user_data_module.entities.Availability;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
@@ -99,6 +100,7 @@ class DoctorsServiceTest {
                 .consultationFee(doctorProfile.getConsultationFee())
                 .licenseNumber(doctorProfile.getLicenseNumber())
                 .availabilityList(doctorProfile.getAvailabilityList())
+                .userProfile(new UserProfileDto())
                 .build();
         doctorsService.updateProfile(0, updateDoctorProfileDto);
 

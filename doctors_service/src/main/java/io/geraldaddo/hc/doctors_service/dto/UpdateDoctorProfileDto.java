@@ -14,5 +14,6 @@ public class UpdateDoctorProfileDto {
     private String licenseNumber;
     private String specialisation;
     private double consultationFee;
+    private UserProfileDto userProfile;
     private List<Availability> availabilityList;
 }

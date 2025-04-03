@@ -2,9 +2,11 @@ package io.geraldaddo.hc.doctors_service.services;
 
 import io.geraldaddo.hc.doctors_service.dto.DoctorsAvailabilityDto;
 import io.geraldaddo.hc.doctors_service.dto.UpdateDoctorProfileDto;
+import io.geraldaddo.hc.doctors_service.dto.UserProfileDto;
 import io.geraldaddo.hc.doctors_service.entities.CurrentStatus;
 import io.geraldaddo.hc.user_data_module.entities.Availability;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
+import io.geraldaddo.hc.user_data_module.entities.User;
 import io.geraldaddo.hc.user_data_module.repositories.DoctorProfileRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,13 +51,32 @@ public class DoctorsService {
     @CachePut(value = "doctor_profile", key = "#id")
     @CacheEvict(value = "availability", key = "#id")
     public DoctorProfile updateProfile(int id, UpdateDoctorProfileDto profileDto) {
-        DoctorProfile profile = getProfile(id);
-        profile
+        DoctorProfile doctorProfile = getProfile(id);
+        doctorProfile
                 .setSpecialisation(profileDto.getSpecialisation())
                 .setLicenseNumber(profileDto.getLicenseNumber())
                 .setConsultationFee(profileDto.getConsultationFee())
                 .setAvailabilityList(profileDto.getAvailabilityList());
-        return profileRepository.save(profile);
+        UserProfileDto userProfileDto = profileDto.getUserProfile();
+        User userProfile = doctorProfile.getUserProfile();
+        userProfile.setFirstName(userProfileDto.getFirstName())
+                .setLastName(userProfileDto.getLastName())
+                .setAge(userProfileDto.getAge())
+                .setNumber(userProfileDto.getNumber())
+                .setEmail(userProfileDto.getEmail())
+                .setDateOfBirth(userProfileDto.getDateOfBirth())
+                .setAddressLineOne(userProfileDto.getAddressLineOne())
+                .setAddressLineTwo(userProfileDto.getAddressLineTwo())
+                .setCity(userProfileDto.getCity())
+                .setCounty(userProfileDto.getCounty())
+                .setCountry(userProfileDto.getCountry())
+                .setEmergencyFirstName(userProfileDto.getEmergencyFirstName())
+                .setEmergencyLastName(userProfileDto.getEmergencyLastName())
+                .setEmergencyNumber(userProfileDto.getEmergencyNumber())
+                .setPostCode(userProfileDto.getPostCode())
+                .setJoined(userProfileDto.getJoined())
+                .setInsuranceNumber(userProfileDto.getInsuranceNumber());
+        return profileRepository.save(doctorProfile);
     }
 
     private CurrentStatus getCurrentStatus(List<Availability> availability, LocalDateTime today) {
