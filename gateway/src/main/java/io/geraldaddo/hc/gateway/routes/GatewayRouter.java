@@ -19,6 +19,8 @@ public class GatewayRouter {
                 .route(methods(HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE).and(path("/patients/**")),
                         http("http://patients-service:8081"))
                 .andRoute(methods(HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE).and(path("/doctors/**")),
-                        http("http://doctors-service:8082"));
+                        http("http://doctors-service:8082"))
+                .andRoute(methods(HttpMethod.GET, HttpMethod.PUT, HttpMethod.DELETE).and(path("/appointments/**")),
+                        http("http://appointments-service:8083"));
     }
 }

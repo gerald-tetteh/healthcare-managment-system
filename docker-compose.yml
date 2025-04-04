@@ -8,59 +8,72 @@ services:
     ports:
       - 8080:8080
     environment:
-      - db_name=usersDB
-      - db_password=users
-      - db_user=usersAdmin
+      - db_name=${USERS_DB}
+      - db_password=${USERS_DB}
+      - db_user=${USERS_DB}
       - port=8080
-#      test key
-      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
+      - secret_key=${SECRET_KEY}
     networks:
       - gateway-service-network
     depends_on:
-      - users-db
+      - app-db
   patients-service:
     container_name: patients-service
     build:
       context: patients_service
     environment:
-      - db_name=usersDB
-      - db_password=users
-      - db_user=usersAdmin
+      - db_name=${USERS_DB}
+      - db_password=${USERS_DB}
+      - db_user=${USERS_DB}
       - port=8081
-      #      test key
-      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
+      - secret_key=${SECRET_KEY}
     networks:
       - gateway-service-network
     depends_on:
-      - users-db
+      - app-db
   doctors-service:
     container_name: doctors-service
     build:
       context: doctors_service
     environment:
-      - db_name=usersDB
-      - db_password=users
-      - db_user=usersAdmin
+      - db_name=${USERS_DB}
+      - db_password=${USERS_DB}
+      - db_user=${USERS_DB}
       - port=8082
-      #      test key
-      - secret_key=ixXnIyxmc7UVzUXpkTxlY8qPEzoJYBXfz7xpThoMWB8f6GEZYUzYaF6gnpZ7x61Q
+      - secret_key=${SECRET_KEY}
     networks:
       - gateway-service-network
     depends_on:
-      - users-db
+      - app-db
       - redis-server
+  appointmens-service:
+    container_name: appointments-service
+    build:
+      context: appointments_service
+    environment:
+      - db_name=${APPOINTMENTS_DB}
+      - db_password=${APPOINTMENTS_DB}
+      - db_user=${APPOINTMENTS_DB}
+      - port=8083
+      - secret_key=${SECRET_KEY}
+    networks:
+      - gateway-service-network
+    depends_on:
+      - app-db
 
-  users-db:
-    image: postgres:17.4
-    container_name: users-db
+  app-db:
+    container_name: app-db
+    build:
+      context: app_db
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_PASSWORD=users
-      - POSTGRES_DB=usersDB
-      - POSTGRES_USER=usersAdmin
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
+      - db_names=${USERS_DB},${APPOINTMENTS_DB}
     networks:
       - gateway-service-network
+
   redis-server:
     image: redis:8.0-M04-alpine
     container_name: redis-server

@@ -22,6 +22,7 @@
         <module>security_module</module>
         <module>doctors_service</module>
         <module>cache_module</module>
+        <module>appointments_service</module>
     </modules>
 
     <properties>

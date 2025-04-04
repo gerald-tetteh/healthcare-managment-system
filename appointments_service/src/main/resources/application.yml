@@ -1,6 +1,6 @@
 spring:
   application:
-    name: gateway
+    name: appointments-service
 
   datasource:
     url: jdbc:postgresql://app-db:5432/${db_name}
@@ -16,12 +16,12 @@ spring:
 
 jwt:
   secret-key: ${secret_key}
-# 4 hours
+  # 4 hours
   expiration-time: 14400000
 
 server:
   port: ${port}
 
-#logging:
-#  level:
-#    org.springframework: TRACE
+logging:
+  level:
+    org.springframework: TRACE
