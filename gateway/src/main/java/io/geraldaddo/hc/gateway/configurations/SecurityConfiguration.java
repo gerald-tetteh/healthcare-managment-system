@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/auth/**")
                                 .permitAll()
                                 .requestMatchers("/doctors/**")
-                                .hasAnyRole(Role.DOCTOR.getName(), Role.ADMIN.getName())
+                                .hasAnyRole(Role.DOCTOR.toString(), Role.ADMIN.toString())
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement((sessionManagement) ->

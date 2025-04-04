@@ -17,6 +17,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.*;
@@ -36,7 +37,7 @@ class PatientsControllerTest {
     private final User user = new User()
             .setFirstName("Test")
             .setLastName("User")
-            .setRoles(List.of())
+            .setRoles(Set.of())
             .setActive(true)
             .setUserId(0);
 
