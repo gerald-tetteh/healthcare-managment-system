@@ -12,6 +12,7 @@ import io.geraldaddo.hc.user_data_module.entities.Availability;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
 import io.geraldaddo.hc.user_data_module.entities.User;
 import io.geraldaddo.hc.user_data_module.enums.Role;
+import io.geraldaddo.hc.user_data_module.enums.Sex;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -27,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -62,6 +64,7 @@ class AuthenticationControllerTest {
                 "18 Southampton Street",
                 "Hampshire",
                 "282-283-284",
+                Sex.MALE,
                 "Southampton",
                 "SO15 2EG",
                 "United Kingdom",
@@ -99,6 +102,7 @@ class AuthenticationControllerTest {
                 LocalDateTime.parse("2022-03-15T02:30:25"),
                 "343-354-839",
                 "Dermatology",
+                Sex.MALE,
                 145.0,
                 List.of(
                         new Availability(
@@ -123,7 +127,7 @@ class AuthenticationControllerTest {
                 new User()
                         .setEmail(loginDto.email())
                         .setPassword(loginDto.password())
-                        .setRoles(List.of(Role.PATIENT))
+                        .setRoles(Set.of(Role.PATIENT))
         );
         when(jwtService.buildToken(anyMap(),any(UserDetails.class))).thenReturn("sampleToken4Test");
 

@@ -15,7 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Set;
 
 @Service
 public class AuthenticationService {
@@ -44,7 +44,7 @@ public class AuthenticationService {
                 .setDateOfBirth(patientRegisterDto.dateOfBirth())
                 .setNumber(patientRegisterDto.number())
                 .setActive(true)
-                .setRoles(List.of(Role.PATIENT))
+                .setRoles(Set.of(Role.PATIENT))
                 .setInsuranceNumber(patientRegisterDto.insuranceNumber())
                 .setSex(patientRegisterDto.sex())
                 .setEmergencyFirstName(patientRegisterDto.emergencyFirstName())
@@ -70,7 +70,7 @@ public class AuthenticationService {
                 .setDateOfBirth(doctorRegisterDto.dateOfBirth())
                 .setNumber(doctorRegisterDto.number())
                 .setActive(true)
-                .setRoles(List.of(Role.DOCTOR))
+                .setRoles(Set.of(Role.DOCTOR))
                 .setInsuranceNumber(doctorRegisterDto.insuranceNumber())
                 .setSex(doctorRegisterDto.sex())
                 .setEmergencyFirstName(doctorRegisterDto.emergencyFirstName())
