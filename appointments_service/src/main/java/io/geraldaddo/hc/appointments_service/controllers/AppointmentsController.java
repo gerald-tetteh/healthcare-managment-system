@@ -19,8 +19,9 @@ public class AppointmentsController {
     private AppointmentsService appointmentsService;
 
     @PostMapping
-    @PreAuthorize("authentication.principal == #createAppointmentDto.patientId " +
-            "|| authentication.principal == #createAppointmentDto.doctorId || hasRole('ADMIN')")
+    @PreAuthorize("(authentication.principal == #createAppointmentDto.patientId && hasRole('PATIENT')) " +
+            "|| (authentication.principal == #createAppointmentDto.doctorId && hasRole('DOCTOR')) " +
+            "|| hasRole('ADMIN')")
     public ResponseEntity<AppointmentDto> createAppointment(@RequestBody CreateAppointmentDto createAppointmentDto) {
         Appointment appointment = appointmentsService.createAppointment(createAppointmentDto);
         return ResponseEntity.ok(AppointmentDto.builder()

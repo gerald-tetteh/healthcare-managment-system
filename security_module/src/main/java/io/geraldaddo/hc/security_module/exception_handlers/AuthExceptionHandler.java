@@ -5,12 +5,13 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class AuthExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
@@ -21,7 +22,13 @@ public class AuthExceptionHandler {
 
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ExceptionResponseDto> handleAuthorizationDeniedException(AuthorizationDeniedException ex) {
-        ExceptionResponseDto responseDto = new ExceptionResponseDto("Authorisation failed", ex.getMessage(), HttpStatus.UNAUTHORIZED);
+        ExceptionResponseDto responseDto = new ExceptionResponseDto("Authorisation failed", ex.getMessage(), HttpStatus.FORBIDDEN);
+        return ResponseEntity.status(responseDto.statusCode()).body(responseDto);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ExceptionResponseDto> handleAccessDeniedException(AccessDeniedException ex) {
+        ExceptionResponseDto responseDto = new ExceptionResponseDto("Authorisation failed", ex.getMessage(), HttpStatus.FORBIDDEN);
         return ResponseEntity.status(responseDto.statusCode()).body(responseDto);
     }
 
