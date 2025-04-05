@@ -3,6 +3,7 @@ package io.geraldaddo.hc.patients_service.services;
 import io.geraldaddo.hc.patients_service.configurations.PatientsServiceTestConfiguration;
 import io.geraldaddo.hc.patients_service.dtos.UserProfileDto;
 import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import io.geraldaddo.hc.user_data_module.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -34,6 +36,7 @@ class PatientsServiceTest {
                         .setActive(true)
                         .setFirstName("Test")
                         .setLastName("User")
+                        .setRoles(Set.of(Role.PATIENT))
                         .setNumber("+443801385938")));
     }
 

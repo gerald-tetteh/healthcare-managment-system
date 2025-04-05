@@ -2,6 +2,7 @@ package io.geraldaddo.hc.patients_service.services;
 
 import io.geraldaddo.hc.patients_service.dtos.UserProfileDto;
 import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import io.geraldaddo.hc.user_data_module.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,8 +13,14 @@ public class PatientsService {
     UserRepository userRepository;
 
     public User getUserById(int id) {
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User with id: " + id + "does not exits."));
+        boolean isPatient = user.getRoles().stream()
+                .anyMatch(role -> role.equals(Role.PATIENT));
+        if(!user.isActive() || !isPatient) {
+            throw new IllegalArgumentException("User with id: " + id + "does not exits.");
+        }
+        return user;
     }
 
     public void deactivateUser(int id) {
@@ -24,9 +31,6 @@ public class PatientsService {
 
     public User updateUser(int id, UserProfileDto userProfileDto) {
         User user = getUserById(id);
-        if(!user.isActive()) {
-            throw new IllegalArgumentException("User with id: " + id + "does not exits.");
-        }
         user.setFirstName(userProfileDto.getFirstName())
                 .setLastName(userProfileDto.getLastName())
                 .setAge(userProfileDto.getAge())

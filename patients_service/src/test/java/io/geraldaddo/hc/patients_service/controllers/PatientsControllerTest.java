@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.patients_service.dtos.UserProfileDto;
 import io.geraldaddo.hc.patients_service.services.PatientsService;
 import io.geraldaddo.hc.user_data_module.entities.User;
+import io.geraldaddo.hc.user_data_module.enums.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +38,7 @@ class PatientsControllerTest {
     private final User user = new User()
             .setFirstName("Test")
             .setLastName("User")
-            .setRoles(Set.of())
+            .setRoles(Set.of(Role.PATIENT))
             .setActive(true)
             .setUserId(0);
 
