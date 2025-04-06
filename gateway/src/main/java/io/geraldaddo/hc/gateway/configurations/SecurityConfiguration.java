@@ -1,6 +1,5 @@
 package io.geraldaddo.hc.gateway.configurations;
 
-import io.geraldaddo.hc.user_data_module.enums.Role;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -37,8 +36,6 @@ public class SecurityConfiguration {
                         authorizeHttpRequests
                                 .requestMatchers("/auth/**")
                                 .permitAll()
-                                .requestMatchers("/doctors/**")
-                                .hasAnyRole(Role.DOCTOR.toString(), Role.ADMIN.toString())
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement((sessionManagement) ->

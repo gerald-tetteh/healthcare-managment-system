@@ -82,15 +82,6 @@ class DoctorsControllerTest {
     }
 
     @Test
-    void shouldFailToGetAvailability() throws Exception {
-        setUserWithWrongId();
-        mockMvc.perform(get("/doctors/0"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.title").value("Authorisation failed"));
-    }
-
-    @Test
     void shouldGetAvailability() throws Exception {
         setAuthorisedUser();
         when(doctorsService.getAvailability(anyInt(), any(LocalDateTime.class)))

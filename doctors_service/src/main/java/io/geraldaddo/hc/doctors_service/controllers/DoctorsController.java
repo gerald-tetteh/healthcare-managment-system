@@ -1,9 +1,6 @@
 package io.geraldaddo.hc.doctors_service.controllers;
 
-import io.geraldaddo.hc.doctors_service.dto.DoctorProfileDto;
-import io.geraldaddo.hc.doctors_service.dto.DoctorsAvailabilityDto;
-import io.geraldaddo.hc.doctors_service.dto.UpdateDoctorProfileDto;
-import io.geraldaddo.hc.doctors_service.dto.UserProfileDto;
+import io.geraldaddo.hc.doctors_service.dto.*;
 import io.geraldaddo.hc.doctors_service.services.DoctorsService;
 import io.geraldaddo.hc.user_data_module.entities.DoctorProfile;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +24,14 @@ public class DoctorsController {
     }
 
     @GetMapping("/{id}/availability")
-    @PreAuthorize("authentication.principal == #id || hasRole('ADMIN')")
     public ResponseEntity<DoctorsAvailabilityDto> getAvailability(@PathVariable int id) {
         return ResponseEntity.ok(doctorsService.getAvailability(id, LocalDateTime.now()));
+    }
+
+    @GetMapping("/{id}/available/{date}")
+    public ResponseEntity<DoctorAvailableDto> getIsDoctorAvailable(
+            @PathVariable int id, @PathVariable LocalDateTime date) {
+        return ResponseEntity.ok(doctorsService.getIsDoctorAvailable(id, date));
     }
 
     @PutMapping("/{id}")

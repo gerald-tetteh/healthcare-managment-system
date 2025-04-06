@@ -1,5 +1,6 @@
 package io.geraldaddo.hc.doctors_service.services;
 
+import io.geraldaddo.hc.doctors_service.dto.DoctorAvailableDto;
 import io.geraldaddo.hc.doctors_service.dto.DoctorsAvailabilityDto;
 import io.geraldaddo.hc.doctors_service.dto.UpdateDoctorProfileDto;
 import io.geraldaddo.hc.doctors_service.dto.UserProfileDto;
@@ -45,6 +46,15 @@ public class DoctorsService {
         return DoctorsAvailabilityDto.builder()
                 .currentStatus(getCurrentStatus(availability, today))
                 .availability(availability)
+                .build();
+    }
+
+    public DoctorAvailableDto getIsDoctorAvailable(int id, LocalDateTime date) {
+        DoctorProfile profile = getProfile(id);
+        List<Availability> availability = profile.getAvailabilityList();
+        CurrentStatus status = getCurrentStatus(availability, date);
+        return DoctorAvailableDto.builder()
+                .isAvailable(status.equals(CurrentStatus.AVAILABLE))
                 .build();
     }
 
