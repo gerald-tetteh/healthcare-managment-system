@@ -24,9 +24,12 @@ public class Appointment {
     @Column(nullable = false)
     private Integer patientId;
     @Column(nullable = false)
-    private LocalDateTime startDateTime;
+    private LocalDateTime dateTime;
     @Column(nullable = false)
-    private LocalDateTime endDateTime;
+    @Enumerated(value = EnumType.STRING)
+    private AppointmentStatus status;
+    @Column(nullable = false)
+    private String notes;
     @CreationTimestamp
     @Column(nullable = false)
     private LocalDateTime createdAt;

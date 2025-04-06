@@ -1,5 +1,6 @@
 package io.geraldaddo.hc.appointments_service.dto;
 
+import io.geraldaddo.hc.appointments_service.entities.AppointmentStatus;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ public class AppointmentDto {
     private Integer appointmentId;
     private Integer doctorId;
     private Integer patientId;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    private LocalDateTime dateTime;
+    private String notes;
+    private AppointmentStatus status;
 }

@@ -23,8 +23,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -52,15 +54,16 @@ class AppointmentsControllerTest {
     @Test
     void shouldSucceedIfUserInAppointmentIsPrincipal() throws Exception {
         CreateAppointmentDto input = CreateAppointmentDto.builder()
-                .patientId(1)
                 .doctorId(0)
-                .startDateTime(LocalDateTime.now())
-                .endDateTime(LocalDateTime.now().plusHours(1))
+                .patientId(1)
+                .dateTime(LocalDateTime.now())
+                .notes("test notes")
                 .build();
-        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class)))
+        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
                 .thenReturn(new Appointment());
         String json = mapper.writeValueAsString(input);
         mockMvc.perform(post("/appointments")
+                .header("Authorization", "Bearer token")
                 .content(json)
                 .with(authentication(patientAuthentication))
                 .with(csrf())
@@ -73,15 +76,16 @@ class AppointmentsControllerTest {
     @Test
     void shouldFailIfPatientInAppointmentIsNotPrincipal() throws Exception {
         CreateAppointmentDto input = CreateAppointmentDto.builder()
-                .patientId(2)
                 .doctorId(0)
-                .startDateTime(LocalDateTime.now())
-                .endDateTime(LocalDateTime.now().plusHours(1))
+                .patientId(2)
+                .dateTime(LocalDateTime.now())
+                .notes("test notes")
                 .build();
-        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class)))
+        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
                 .thenReturn(new Appointment());
         String json = mapper.writeValueAsString(input);
         mockMvc.perform(post("/appointments")
+                        .header("Authorization", "Bearer token")
                         .content(json)
                         .with(csrf())
                         .with(authentication(patientAuthentication))
@@ -93,16 +97,17 @@ class AppointmentsControllerTest {
     @Test
     void shouldFailIfUserHasValidIdButWrongRole() throws Exception {
         CreateAppointmentDto input = CreateAppointmentDto.builder()
-                .patientId(1)
-                .doctorId(0)
-                .startDateTime(LocalDateTime.now())
-                .endDateTime(LocalDateTime.now().plusHours(1))
+                .doctorId(1)
+                .patientId(0)
+                .dateTime(LocalDateTime.now())
+                .notes("test notes")
                 .build();
-        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class)))
+        when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
                 .thenReturn(new Appointment());
         String json = mapper.writeValueAsString(input);
         // should match on doctor id but role is different
         mockMvc.perform(post("/appointments")
+                        .header("Authorization", "Bearer token")
                         .content(json)
                         .with(csrf())
                         .with(authentication(wrongRoleAuthentication))

@@ -12,6 +12,6 @@ import java.time.LocalDateTime;
 public class CreateAppointmentDto {
     private Integer doctorId;
     private Integer patientId;
-    private LocalDateTime startDateTime;
-    private LocalDateTime endDateTime;
+    private LocalDateTime dateTime;
+    private String notes;
 }
