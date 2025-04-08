@@ -9,6 +9,7 @@ import io.geraldaddo.hc.appointments_service.dto.DoctorAvailableDto;
 import io.geraldaddo.hc.appointments_service.entities.Appointment;
 import io.geraldaddo.hc.appointments_service.exceptions.AppointmentsServerException;
 import io.geraldaddo.hc.appointments_service.repositories.AppointmentsRepository;
+import io.geraldaddo.hc.cache_module.utils.CacheUtils;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -37,6 +38,9 @@ class AppointmentsServiceTest {
             .registerModule(new JavaTimeModule());
     @MockitoBean
     AppointmentsRepository appointmentsRepository;
+    @MockitoBean
+    CacheUtils cacheUtils;
+
     AppointmentsService underTest;
 
     @BeforeEach
@@ -44,7 +48,7 @@ class AppointmentsServiceTest {
         WebClient client = WebClient.builder()
                 .baseUrl(String.format("http://localhost:%s", mockWebServer.getPort()))
                 .build();
-        underTest = new AppointmentsService(appointmentsRepository, client);
+        underTest = new AppointmentsService(appointmentsRepository, cacheUtils, client);
     }
 
     @BeforeAll

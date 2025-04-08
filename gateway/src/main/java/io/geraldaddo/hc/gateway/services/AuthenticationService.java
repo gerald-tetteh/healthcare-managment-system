@@ -8,6 +8,7 @@ import io.geraldaddo.hc.user_data_module.entities.User;
 import io.geraldaddo.hc.user_data_module.enums.Role;
 import io.geraldaddo.hc.user_data_module.repositories.DoctorProfileRepository;
 import io.geraldaddo.hc.user_data_module.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -62,6 +63,7 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
+    @Transactional
     public DoctorProfile doctorSignUp(DoctorRegisterDto doctorRegisterDto) {
         User user = new User()
                 .setFirstName(doctorRegisterDto.firstName())

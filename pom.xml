@@ -23,6 +23,7 @@
         <module>doctors_service</module>
         <module>cache_module</module>
         <module>appointments_service</module>
+        <module>kafka_config_module</module>
     </modules>
 
     <properties>

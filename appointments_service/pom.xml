@@ -40,6 +40,18 @@
             <version>${project.parent.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.geraldaddo.hc</groupId>
+            <artifactId>kafka_config_module</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.geraldaddo.hc</groupId>
+            <artifactId>cache_module</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

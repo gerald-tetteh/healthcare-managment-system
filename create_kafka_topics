@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./kafka-topics.sh --create --topic announcements --bootstrap-server broker:29092

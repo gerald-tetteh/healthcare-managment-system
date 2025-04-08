@@ -13,6 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
 
@@ -29,6 +30,7 @@ public class CacheConfiguration {
     RedisTemplate<Object, Object> redisTemplate(LettuceConnectionFactory connectionFactory) {
         RedisTemplate<Object, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
         return template;
     }
 
@@ -39,10 +41,13 @@ public class CacheConfiguration {
                         .allowIfSubType(Object.class).build(),
                         ObjectMapper.DefaultTyping.NON_FINAL,
                         JsonTypeInfo.As.PROPERTY);
+        RedisSerializationContext.SerializationPair<String> keySerializer = RedisSerializationContext
+                .SerializationPair.fromSerializer(new StringRedisSerializer());
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration
                 .defaultCacheConfig()
                 .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues()
+                .serializeKeysWith(keySerializer)
                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                         .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
         return builder -> builder
@@ -50,8 +55,10 @@ public class CacheConfiguration {
                         RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofSeconds(15))
                                 .disableCachingNullValues()
+                                .serializeKeysWith(keySerializer)
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                                         .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper))))
-                .withCacheConfiguration("doctor_profile", defaultConfig);
+                .withCacheConfiguration("doctor_profile", defaultConfig)
+                .withCacheConfiguration("appointments", defaultConfig);
     }
 }
