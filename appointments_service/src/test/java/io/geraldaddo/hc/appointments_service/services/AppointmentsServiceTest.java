@@ -18,12 +18,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -72,7 +75,7 @@ class AppointmentsServiceTest {
                 .notes("test notes")
                 .build();
         when(appointmentsRepository.save(any(Appointment.class)))
-                .thenReturn(new Appointment());
+                .thenReturn(Appointment.builder().doctorId(0).build());
         mockWebServer.enqueue(new MockResponse()
                 .setBody(mapper.writeValueAsString(new DoctorAvailableDto(true)))
                 .addHeader("Content-Type", "application/json"));
@@ -121,5 +124,17 @@ class AppointmentsServiceTest {
 
         verify(appointmentsRepository, times(0))
                 .save(any(Appointment.class));
+    }
+
+    @Test
+    public void shouldGetDoctorsAppointments() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(appointmentsRepository.findAllByDoctorId(0, pageable)).thenReturn(
+                List.of(new Appointment())
+        );
+
+        underTest.getDoctorAppointments(0,0,10);
+
+        verify(appointmentsRepository, times(1)).findAllByDoctorId(0, pageable);
     }
 }

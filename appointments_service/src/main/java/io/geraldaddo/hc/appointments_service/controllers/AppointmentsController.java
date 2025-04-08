@@ -42,13 +42,14 @@ public class AppointmentsController {
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws JsonProcessingException {
         Appointment appointment = appointmentsService.createAppointment(createAppointmentDto, token);
         logger.info(String.format("appointment created between doctor: %d and patient: %d at %s",
-                appointment.getDoctorId(), appointment.getPatientId(), appointment.getDateTime().toString()));
+                appointment.getDoctorId(), appointment.getPatientId(), appointment.getDateTime()));
         sendKafkaMessage(appointment);
         logger.info(String.format("sent kafka message for appointment: %d", appointment.getAppointmentId()));
         return ResponseEntity.ok(buildAppointmentDto(appointment));
     }
 
     @GetMapping("/doctor/{id}")
+    @PreAuthorize("(authentication.principal == #id && hasRole('DOCTOR')) || hasRole('ADMIN')")
     public ResponseEntity<AppointmentListDto> getDoctorAppointments(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int page,

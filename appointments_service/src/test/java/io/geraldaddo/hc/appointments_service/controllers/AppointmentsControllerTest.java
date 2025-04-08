@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,9 +25,10 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,12 +40,24 @@ class AppointmentsControllerTest {
     MockMvc mockMvc;
     @MockitoBean
     AppointmentsService appointmentsService;
+    @MockitoBean
+    KafkaTemplate<String, String> kafkaTemplate;
 
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private final Authentication patientAuthentication = new UsernamePasswordAuthenticationToken(
             1,
             null,
             List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+    );
+    private final Authentication doctorAuthentication = new UsernamePasswordAuthenticationToken(
+            2,
+            null,
+            List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+    );
+    private final Authentication wrongDoctorIdAuthentication = new UsernamePasswordAuthenticationToken(
+            1,
+            null,
+            List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
     );
     private final Authentication wrongRoleAuthentication = new UsernamePasswordAuthenticationToken(
             0,
@@ -112,6 +126,33 @@ class AppointmentsControllerTest {
                         .with(csrf())
                         .with(authentication(wrongRoleAuthentication))
                         .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldGetDoctorsAppointments() throws Exception {
+        when(appointmentsService.getDoctorAppointments(2,0, 10))
+                .thenReturn(List.of(new Appointment()));
+
+        mockMvc.perform(get("/appointments/doctor/2")
+                .with(authentication(doctorAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(1))
+                .getDoctorAppointments(2,0, 10);
+    }
+
+    @Test
+    void shouldFailToGetDoctorsAppointmentsWithWrongAuthentication() throws Exception {
+        mockMvc.perform(get("/appointments/doctor/1")
+                        .with(authentication(wrongRoleAuthentication)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        mockMvc.perform(get("/appointments/doctor/2")
+                        .with(authentication(wrongDoctorIdAuthentication)))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
