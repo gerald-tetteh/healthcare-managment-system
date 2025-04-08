@@ -10,7 +10,7 @@ public class WebClients {
     @Bean(value = "doctors-service")
     WebClient doctorsWebClient() {
         return WebClient.builder()
-                .baseUrl("http://doctors-service:8082")
+                .baseUrl("http://doctors-service:8082/doctors")
                 .build();
     }
 }

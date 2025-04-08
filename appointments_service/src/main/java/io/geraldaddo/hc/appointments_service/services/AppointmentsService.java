@@ -9,6 +9,7 @@ import io.geraldaddo.hc.appointments_service.repositories.AppointmentsRepository
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -29,7 +30,7 @@ public class AppointmentsService {
         DoctorAvailableDto availableDto = doctorsWebClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/{doctorId}/available/{date}")
                         .build(createAppointmentDto.getDoctorId(), createAppointmentDto.getDateTime()))
-                .header("Authorization", token)
+                .header(HttpHeaders.AUTHORIZATION, token)
                 .retrieve()
                 .bodyToMono(DoctorAvailableDto.class)
                 .block();
