@@ -146,13 +146,42 @@ class AppointmentsControllerTest {
 
     @Test
     void shouldFailToGetDoctorsAppointmentsWithWrongAuthentication() throws Exception {
+        // should fail due to wrong role
         mockMvc.perform(get("/appointments/doctor/1")
                         .with(authentication(wrongRoleAuthentication)))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
-
+        // should fail due to different id
         mockMvc.perform(get("/appointments/doctor/2")
                         .with(authentication(wrongDoctorIdAuthentication)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldGetPatientsAppointments() throws Exception {
+        when(appointmentsService.getPatientAppointments(1,0, 10))
+                .thenReturn(List.of(new Appointment()));
+
+        mockMvc.perform(get("/appointments/patient/1")
+                        .with(authentication(patientAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(1))
+                .getPatientAppointments(1,0, 10);
+    }
+
+    @Test
+    void shouldFailToGetPatientsAppointmentsWithWrongAuthentication() throws Exception {
+        // should fail due to invalid role
+        mockMvc.perform(get("/appointments/patient/1")
+                        .with(authentication(wrongRoleAuthentication)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+        // should fail due to different id
+        mockMvc.perform(get("/appointments/patient/2")
+                        .with(authentication(patientAuthentication)))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }

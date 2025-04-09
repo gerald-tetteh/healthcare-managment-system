@@ -71,6 +71,13 @@ public class AppointmentsService {
             unless = "#result.isEmpty()")
     public List<Appointment> getDoctorAppointments(int doctorId, int page, int numberOfRecords) {
         Pageable pageable = PageRequest.of(page, numberOfRecords);
-        return appointmentsRepository.findAllByDoctorId(doctorId ,pageable);
+        return appointmentsRepository.findAllByDoctorId(doctorId, pageable);
+    }
+
+    @Cacheable(value = "appointments", key = "#patientId + '_' + #page + '_' + #numberOfRecords",
+            unless = "#result.isEmpty()")
+    public List<Appointment> getPatientAppointments(int patientId, int page, int numberOfRecords) {
+        Pageable pageable = PageRequest.of(page, numberOfRecords);
+        return appointmentsRepository.findAllByPatientId(patientId, pageable);
     }
 }

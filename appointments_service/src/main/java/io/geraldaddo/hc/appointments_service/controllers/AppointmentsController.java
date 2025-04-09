@@ -64,6 +64,22 @@ public class AppointmentsController {
                 .build());
     }
 
+    @GetMapping("/patient/{id}")
+    @PreAuthorize("(authentication.principal == #id && hasRole('PATIENT')) || hasRole('ADMIN')")
+    public ResponseEntity<AppointmentListDto> getPatientAppointments(
+            @PathVariable int id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10", name = "size") int numberOfRecords) {
+        List<Appointment> appointments = appointmentsService.getPatientAppointments(id,page,numberOfRecords);
+        List<AppointmentDto> appointmentDtos = appointments.stream().map(this::buildAppointmentDto)
+                .toList();
+        return ResponseEntity.ok(AppointmentListDto.builder()
+                .appointments(appointmentDtos)
+                .page(0)
+                .numberOfRecords(appointmentDtos.size())
+                .build());
+    }
+
     private void sendKafkaMessage(Object object) throws JsonProcessingException {
         String message = mapper.writeValueAsString(object);
         kafkaTemplate.send(kafkaTopic, message);

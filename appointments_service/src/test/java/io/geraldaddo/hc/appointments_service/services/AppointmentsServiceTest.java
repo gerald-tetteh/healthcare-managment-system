@@ -137,4 +137,16 @@ class AppointmentsServiceTest {
 
         verify(appointmentsRepository, times(1)).findAllByDoctorId(0, pageable);
     }
+
+    @Test
+    public void shouldGetPatientsAppointments() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(appointmentsRepository.findAllByPatientId(0, pageable)).thenReturn(
+                List.of(new Appointment())
+        );
+
+        underTest.getPatientAppointments(0,0,10);
+
+        verify(appointmentsRepository, times(1)).findAllByPatientId(0, pageable);
+    }
 }
