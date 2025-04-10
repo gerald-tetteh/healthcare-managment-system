@@ -9,6 +9,7 @@ import io.geraldaddo.hc.cache_module.utils.CacheUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +38,7 @@ public class AppointmentsService {
         this.cacheUtils = cacheUtils;
     }
 
+    @CacheEvict(value = "appointments", allEntries = true)
     public AppointmentDto createAppointment(CreateAppointmentDto createAppointmentDto, String token) {
         DoctorAvailableDto availableDto = doctorsWebClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/{doctorId}/available/{date}")

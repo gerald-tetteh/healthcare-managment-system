@@ -3,9 +3,7 @@ package io.geraldaddo.hc.appointments_service.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.appointments_service.configurations.AppointmentsTestConfiguration;
-import io.geraldaddo.hc.appointments_service.dto.AppointmentDto;
-import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
-import io.geraldaddo.hc.appointments_service.dto.PaginatedAppointmentListDto;
+import io.geraldaddo.hc.appointments_service.dto.*;
 import io.geraldaddo.hc.appointments_service.services.AppointmentsService;
 import io.geraldaddo.hc.security_module.exception_handlers.AuthExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -182,6 +180,37 @@ class AppointmentsControllerTest {
         // should fail due to different id
         mockMvc.perform(get("/appointments/patient/2")
                         .with(authentication(patientAuthentication)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldApproveDoctorsAppointments() throws Exception {
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        when(appointmentsService.approveAppointments(dto, doctorAuthentication))
+                .thenReturn(new AppointmentListDto(List.of()));
+
+        mockMvc.perform(post("/appointments/approve")
+                        .with(authentication(doctorAuthentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(1))
+                .approveAppointments(dto, doctorAuthentication);
+    }
+
+    @Test
+    void shouldFailToApproveAppointmentsDueToWrongRole() throws Exception {
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+
+        mockMvc.perform(post("/appointments/approve")
+                        .with(authentication(patientAuthentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
