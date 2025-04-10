@@ -9,6 +9,7 @@ import io.geraldaddo.hc.appointments_service.dto.AppointmentListDto;
 import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
 import io.geraldaddo.hc.appointments_service.dto.DoctorAvailableDto;
 import io.geraldaddo.hc.appointments_service.entities.Appointment;
+import io.geraldaddo.hc.appointments_service.entities.AppointmentStatus;
 import io.geraldaddo.hc.appointments_service.exceptions.AppointmentsServerException;
 import io.geraldaddo.hc.appointments_service.repositories.AppointmentsRepository;
 import io.geraldaddo.hc.cache_module.utils.CacheUtils;
@@ -33,6 +34,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -104,9 +106,8 @@ class AppointmentsServiceTest {
                 .setBody(mapper.writeValueAsString(new DoctorAvailableDto(false)))
                 .addHeader("Content-Type", "application/json"));
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            underTest.createAppointment(createAppointmentDto, "");
-        });
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+                underTest.createAppointment(createAppointmentDto, ""));
         assertEquals("Doctor is unavailable at specified time", exception.getMessage());
 
         verify(appointmentsRepository, times(0))
@@ -114,7 +115,7 @@ class AppointmentsServiceTest {
     }
 
     @Test
-    public void shouldThrowExceptionIfDoctorServiceUnavailable() throws IOException {
+    public void shouldThrowExceptionIfDoctorServiceUnavailable() {
         CreateAppointmentDto createAppointmentDto = CreateAppointmentDto.builder()
                 .doctorId(0)
                 .patientId(0)
@@ -123,9 +124,8 @@ class AppointmentsServiceTest {
                 .build();
         mockWebServer.enqueue(new MockResponse());
 
-        Exception exception = assertThrows(AppointmentsServerException.class, () -> {
-            underTest.createAppointment(createAppointmentDto, "");
-        });
+        Exception exception = assertThrows(AppointmentsServerException.class, () ->
+                underTest.createAppointment(createAppointmentDto, ""));
         assertEquals("Could not validate doctors availability", exception.getMessage());
 
         verify(appointmentsRepository, times(0))
@@ -178,5 +178,49 @@ class AppointmentsServiceTest {
 
         verify(appointmentsRepository, times(1)).findAllById(List.of(1,2,3));
         verify(appointmentsRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    public void shouldFilterOutOtherDoctorsAppointments() {
+        List<Appointment> appointments = List.of(
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(1).build(),
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(2).build(),
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(2).build());
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+        );
+        when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
+
+        Stream<Appointment> appointmentStream = underTest.setAppointmentsStatus(dto, auth);
+
+        List<Appointment> appointmentList = appointmentStream
+                .peek(ap -> assertEquals(AppointmentStatus.SCHEDULED, ap.getStatus()))
+                .toList();
+        assertEquals(1, appointmentList.size());
+    }
+
+    @Test
+    public void shouldOnlySetAppointmentsThatArePending() {
+        List<Appointment> appointments = List.of(
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(1).build(),
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(1).build(),
+                Appointment.builder().status(AppointmentStatus.CANCELED).doctorId(1).build());
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+        );
+        when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
+
+        Stream<Appointment> appointmentStream = underTest.setAppointmentsStatus(dto, auth);
+
+        List<Appointment> appointmentList = appointmentStream
+                .peek(ap -> assertEquals(AppointmentStatus.SCHEDULED, ap.getStatus()))
+                .toList();
+        assertEquals(2, appointmentList.size());
     }
 }

@@ -107,7 +107,7 @@ public class AppointmentsService {
         return new AppointmentListDto(dtos);
     }
 
-    private Stream<Appointment> setAppointmentsStatus(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+    protected Stream<Appointment> setAppointmentsStatus(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
         return appointmentsRepository.findAllById(appointmentIdsDto.ids()).stream()
                 .filter(ap -> ap.getDoctorId() == authentication.getPrincipal()
                                 && ap.getStatus() == AppointmentStatus.PENDING)
