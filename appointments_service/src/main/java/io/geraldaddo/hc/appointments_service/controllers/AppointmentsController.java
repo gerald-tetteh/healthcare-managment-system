@@ -3,10 +3,7 @@ package io.geraldaddo.hc.appointments_service.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.geraldaddo.hc.appointments_service.dto.AppointmentDto;
-import io.geraldaddo.hc.appointments_service.dto.AppointmentListDto;
-import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
-import io.geraldaddo.hc.appointments_service.entities.Appointment;
+import io.geraldaddo.hc.appointments_service.dto.*;
 import io.geraldaddo.hc.appointments_service.services.AppointmentsService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,9 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -40,58 +36,41 @@ public class AppointmentsController {
     public ResponseEntity<AppointmentDto> createAppointment(
             @RequestBody CreateAppointmentDto createAppointmentDto,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String token) throws JsonProcessingException {
-        Appointment appointment = appointmentsService.createAppointment(createAppointmentDto, token);
+        AppointmentDto appointment = appointmentsService.createAppointment(createAppointmentDto, token);
         logger.info(String.format("appointment created between doctor: %d and patient: %d at %s",
                 appointment.getDoctorId(), appointment.getPatientId(), appointment.getDateTime()));
         sendKafkaMessage(appointment);
         logger.info(String.format("sent kafka message for appointment: %d", appointment.getAppointmentId()));
-        return ResponseEntity.ok(buildAppointmentDto(appointment));
+        return ResponseEntity.ok(appointment);
     }
 
     @GetMapping("/doctor/{id}")
     @PreAuthorize("(authentication.principal == #id && hasRole('DOCTOR')) || hasRole('ADMIN')")
-    public ResponseEntity<AppointmentListDto> getDoctorAppointments(
+    public ResponseEntity<PaginatedAppointmentListDto> getDoctorAppointments(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10", name = "size") int numberOfRecords) {
-        List<Appointment> appointments = appointmentsService.getDoctorAppointments(id,page,numberOfRecords);
-        List<AppointmentDto> appointmentDtos = appointments.stream().map(this::buildAppointmentDto)
-                .toList();
-        return ResponseEntity.ok(AppointmentListDto.builder()
-                .appointments(appointmentDtos)
-                .page(0)
-                .numberOfRecords(appointmentDtos.size())
-                .build());
+        return ResponseEntity.ok(appointmentsService.getDoctorAppointments(id,page,numberOfRecords));
     }
 
     @GetMapping("/patient/{id}")
     @PreAuthorize("(authentication.principal == #id && hasRole('PATIENT')) || hasRole('ADMIN')")
-    public ResponseEntity<AppointmentListDto> getPatientAppointments(
+    public ResponseEntity<PaginatedAppointmentListDto> getPatientAppointments(
             @PathVariable int id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10", name = "size") int numberOfRecords) {
-        List<Appointment> appointments = appointmentsService.getPatientAppointments(id,page,numberOfRecords);
-        List<AppointmentDto> appointmentDtos = appointments.stream().map(this::buildAppointmentDto)
-                .toList();
-        return ResponseEntity.ok(AppointmentListDto.builder()
-                .appointments(appointmentDtos)
-                .page(0)
-                .numberOfRecords(appointmentDtos.size())
-                .build());
+        return ResponseEntity.ok(appointmentsService.getPatientAppointments(id,page,numberOfRecords));
+    }
+
+    @PostMapping("/approve")
+    @PreAuthorize("hasRole('DOCTOR') || hasRole('ADMIN')")
+    public ResponseEntity<AppointmentListDto> approveAppointment(
+            @RequestBody AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+        return ResponseEntity.ok(appointmentsService.approveAppointments(appointmentIdsDto, authentication));
     }
 
     private void sendKafkaMessage(Object object) throws JsonProcessingException {
         String message = mapper.writeValueAsString(object);
         kafkaTemplate.send(kafkaTopic, message);
-    }
-    private AppointmentDto buildAppointmentDto(Appointment appointment) {
-        return AppointmentDto.builder()
-                .appointmentId(appointment.getAppointmentId())
-                .doctorId(appointment.getDoctorId())
-                .patientId(appointment.getPatientId())
-                .status(appointment.getStatus())
-                .dateTime(appointment.getDateTime())
-                .notes(appointment.getNotes())
-                .build();
     }
 }

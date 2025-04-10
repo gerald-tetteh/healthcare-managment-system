@@ -19,9 +19,13 @@ jwt:
   # 4 hours
   expiration-time: 14400000
 
+kafka:
+  bootstrap-address: broker:29092
+  topic: announcements
+
 server:
   port: ${port}
 
-logging:
-  level:
-    org.springframework: TRACE
+#logging:
+#  level:
+#    org.springframework: TRACE

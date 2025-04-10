@@ -1,7 +1,6 @@
 package io.geraldaddo.hc.appointments_service.services;
 
-import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
-import io.geraldaddo.hc.appointments_service.dto.DoctorAvailableDto;
+import io.geraldaddo.hc.appointments_service.dto.*;
 import io.geraldaddo.hc.appointments_service.entities.Appointment;
 import io.geraldaddo.hc.appointments_service.entities.AppointmentStatus;
 import io.geraldaddo.hc.appointments_service.exceptions.AppointmentsServerException;
@@ -11,13 +10,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class AppointmentsService {
@@ -35,7 +37,7 @@ public class AppointmentsService {
         this.cacheUtils = cacheUtils;
     }
 
-    public Appointment createAppointment(CreateAppointmentDto createAppointmentDto, String token) {
+    public AppointmentDto createAppointment(CreateAppointmentDto createAppointmentDto, String token) {
         DoctorAvailableDto availableDto = doctorsWebClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/{doctorId}/available/{date}")
                         .build(createAppointmentDto.getDoctorId(), createAppointmentDto.getDateTime()))
@@ -63,21 +65,62 @@ public class AppointmentsService {
         Appointment savedAppointment = appointmentsRepository.save(appointment);
         cacheUtils.evictFromCacheByKeyMatch(
                 "appointments", savedAppointment.getDoctorId().toString());
-        return savedAppointment;
+        return buildAppointmentDto(savedAppointment);
     }
 
     @Cacheable(
             value = "appointments", key = "#doctorId + '_' + #page + '_' + #numberOfRecords",
-            unless = "#result.isEmpty()")
-    public List<Appointment> getDoctorAppointments(int doctorId, int page, int numberOfRecords) {
+            unless = "#result.numberOfRecords < 1")
+    public PaginatedAppointmentListDto getDoctorAppointments(int doctorId, int page, int numberOfRecords) {
         Pageable pageable = PageRequest.of(page, numberOfRecords);
-        return appointmentsRepository.findAllByDoctorId(doctorId, pageable);
+        Page<Appointment> slice = appointmentsRepository.findAllByDoctorId(doctorId, pageable);
+        return PaginatedAppointmentListDto
+                .builder()
+                .appointments(slice.getContent().stream().map(this::buildAppointmentDto).toList())
+                .numberOfRecords(slice.getNumberOfElements())
+                .totalAppointments(slice.getTotalElements())
+                .page(page)
+                .build();
     }
 
     @Cacheable(value = "appointments", key = "#patientId + '_' + #page + '_' + #numberOfRecords",
-            unless = "#result.isEmpty()")
-    public List<Appointment> getPatientAppointments(int patientId, int page, int numberOfRecords) {
+            unless = "#result.numberOfRecords < 1")
+    public PaginatedAppointmentListDto getPatientAppointments(int patientId, int page, int numberOfRecords) {
         Pageable pageable = PageRequest.of(page, numberOfRecords);
-        return appointmentsRepository.findAllByPatientId(patientId, pageable);
+        Page<Appointment> slice = appointmentsRepository.findAllByPatientId(patientId, pageable);
+        return PaginatedAppointmentListDto
+                .builder()
+                .appointments(slice.getContent().stream().map(this::buildAppointmentDto).toList())
+                .numberOfRecords(slice.getNumberOfElements())
+                .totalAppointments(slice.getTotalElements())
+                .page(page)
+                .build();
+    }
+
+    public AppointmentListDto approveAppointments(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+        Stream<Appointment> appointmentStream = setAppointmentsStatus(appointmentIdsDto, authentication);
+        List<AppointmentDto> dtos = appointmentsRepository
+                .saveAll(appointmentStream.toList())
+                .stream()
+                .map(this::buildAppointmentDto)
+                .toList();
+        return new AppointmentListDto(dtos);
+    }
+
+    private Stream<Appointment> setAppointmentsStatus(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+        return appointmentsRepository.findAllById(appointmentIdsDto.ids()).stream()
+                .filter(ap -> ap.getDoctorId() == authentication.getPrincipal()
+                                && ap.getStatus() == AppointmentStatus.PENDING)
+                .peek(ap -> ap.setStatus(AppointmentStatus.SCHEDULED));
+    }
+    private AppointmentDto buildAppointmentDto(Appointment appointment) {
+        return AppointmentDto.builder()
+                .appointmentId(appointment.getAppointmentId())
+                .doctorId(appointment.getDoctorId())
+                .patientId(appointment.getPatientId())
+                .status(appointment.getStatus())
+                .dateTime(appointment.getDateTime())
+                .notes(appointment.getNotes())
+                .build();
     }
 }

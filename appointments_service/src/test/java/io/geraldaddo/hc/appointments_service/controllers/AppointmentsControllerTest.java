@@ -5,7 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.appointments_service.configurations.AppointmentsTestConfiguration;
 import io.geraldaddo.hc.appointments_service.dto.AppointmentDto;
 import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
-import io.geraldaddo.hc.appointments_service.entities.Appointment;
+import io.geraldaddo.hc.appointments_service.dto.PaginatedAppointmentListDto;
 import io.geraldaddo.hc.appointments_service.services.AppointmentsService;
 import io.geraldaddo.hc.security_module.exception_handlers.AuthExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ class AppointmentsControllerTest {
                 .notes("test notes")
                 .build();
         when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
-                .thenReturn(new Appointment());
+                .thenReturn(new AppointmentDto());
         String json = mapper.writeValueAsString(input);
         mockMvc.perform(post("/appointments")
                 .header("Authorization", "Bearer token")
@@ -96,7 +96,7 @@ class AppointmentsControllerTest {
                 .notes("test notes")
                 .build();
         when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
-                .thenReturn(new Appointment());
+                .thenReturn(new AppointmentDto());
         String json = mapper.writeValueAsString(input);
         mockMvc.perform(post("/appointments")
                         .header("Authorization", "Bearer token")
@@ -117,7 +117,7 @@ class AppointmentsControllerTest {
                 .notes("test notes")
                 .build();
         when(appointmentsService.createAppointment(any(CreateAppointmentDto.class), anyString()))
-                .thenReturn(new Appointment());
+                .thenReturn(new AppointmentDto());
         String json = mapper.writeValueAsString(input);
         // should match on doctor id but role is different
         mockMvc.perform(post("/appointments")
@@ -133,7 +133,7 @@ class AppointmentsControllerTest {
     @Test
     void shouldGetDoctorsAppointments() throws Exception {
         when(appointmentsService.getDoctorAppointments(2,0, 10))
-                .thenReturn(List.of(new Appointment()));
+                .thenReturn(new PaginatedAppointmentListDto());
 
         mockMvc.perform(get("/appointments/doctor/2")
                 .with(authentication(doctorAuthentication)))
@@ -161,7 +161,7 @@ class AppointmentsControllerTest {
     @Test
     void shouldGetPatientsAppointments() throws Exception {
         when(appointmentsService.getPatientAppointments(1,0, 10))
-                .thenReturn(List.of(new Appointment()));
+                .thenReturn(new PaginatedAppointmentListDto());
 
         mockMvc.perform(get("/appointments/patient/1")
                         .with(authentication(patientAuthentication)))
