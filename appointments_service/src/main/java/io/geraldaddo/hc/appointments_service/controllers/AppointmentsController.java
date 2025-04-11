@@ -16,6 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 
 @RestController
 @RequestMapping("/appointments")
@@ -39,8 +41,7 @@ public class AppointmentsController {
         AppointmentDto appointment = appointmentsService.createAppointment(createAppointmentDto, token);
         logger.info(String.format("appointment created between doctor: %d and patient: %d at %s",
                 appointment.getDoctorId(), appointment.getPatientId(), appointment.getDateTime()));
-        sendKafkaMessage(appointment);
-        logger.info(String.format("sent kafka message for appointment: %d", appointment.getAppointmentId()));
+        sendKafkaMessage("create", appointment);
         return ResponseEntity.ok(appointment);
     }
 
@@ -65,12 +66,42 @@ public class AppointmentsController {
     @PostMapping("/approve")
     @PreAuthorize("hasRole('DOCTOR') || hasRole('ADMIN')")
     public ResponseEntity<AppointmentListDto> approveAppointment(
-            @RequestBody AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
-        return ResponseEntity.ok(appointmentsService.approveAppointments(appointmentIdsDto, authentication));
+            @RequestBody AppointmentIdsDto appointmentIdsDto, Authentication authentication) throws JsonProcessingException {
+        AppointmentListDto dto = appointmentsService.approveAppointments(appointmentIdsDto, authentication);
+        logger.info(String.format("approved appointments: %s",
+                dto.appointments().stream().map(AppointmentDto::getAppointmentId)));
+        sendKafkaMessage("approve", dto);
+        return ResponseEntity.ok(dto);
     }
 
-    private void sendKafkaMessage(Object object) throws JsonProcessingException {
+    @PostMapping("/cancel")
+    @PreAuthorize("hasRole('PATIENT') || hasRole('DOCTOR') || hasRole('ADMIN')")
+    public ResponseEntity<AppointmentListDto> cancelAppointment(
+            @RequestBody AppointmentIdsDto appointmentIdsDto, Authentication authentication) throws JsonProcessingException {
+        AppointmentListDto dto = appointmentsService.cancelAppointments(appointmentIdsDto, authentication);
+        logger.info(String.format("user: %s cancelled appointments: %s",
+               authentication.getPrincipal() ,dto.appointments().stream().map(AppointmentDto::getAppointmentId)));
+        sendKafkaMessage("cancel", dto);
+        return ResponseEntity.ok(dto);
+    }
+
+    @PatchMapping("/{id}/reschedule")
+    @PreAuthorize("hasRole('PATIENT') || hasRole('DOCTOR') || hasRole('ADMIN')")
+    public ResponseEntity<AppointmentDto> rescheduleAppointment(
+            @PathVariable int id,
+            @RequestParam(name = "date") LocalDateTime dateTime,
+            Authentication authentication) throws JsonProcessingException {
+        AppointmentDto dto = appointmentsService.rescheduleAppointment(
+                id, dateTime, authentication);
+        logger.info(String.format("user: %s rescheduled appointment: %d",
+                authentication.getPrincipal(), dto.getAppointmentId()));
+        sendKafkaMessage("reschedule", dto);
+        return ResponseEntity.ok(dto);
+    }
+
+    private void sendKafkaMessage(String key, Object object) throws JsonProcessingException {
         String message = mapper.writeValueAsString(object);
-        kafkaTemplate.send(kafkaTopic, message);
+        kafkaTemplate.send(kafkaTopic, key, message);
+        logger.info(String.format("sent kafka message from appointments with key %s", key));
     }
 }

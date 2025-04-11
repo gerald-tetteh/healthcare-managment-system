@@ -26,8 +26,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -213,5 +212,76 @@ class AppointmentsControllerTest {
                         .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldCancelAppointment() throws Exception {
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        when(appointmentsService.cancelAppointments(dto, patientAuthentication))
+                .thenReturn(new AppointmentListDto(List.of()));
+
+        mockMvc.perform(post("/appointments/cancel")
+                        .with(authentication(patientAuthentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(1))
+                .cancelAppointments(dto, patientAuthentication);
+    }
+
+    @Test
+    void shouldFailToCancelAppointmentsDueToWrongRole() throws Exception {
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+
+        mockMvc.perform(post("/appointments/cancel")
+                        .with(authentication(wrongRoleAuthentication))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldRescheduleAppointment() throws Exception {
+        LocalDateTime initial = LocalDateTime.now();
+        LocalDateTime finalDate = initial.plusHours(1);
+        AppointmentDto dto = AppointmentDto.builder()
+                .appointmentId(0)
+                .doctorId(2)
+                .dateTime(initial)
+                .build();
+
+        when(appointmentsService.rescheduleAppointment(
+                0,finalDate, doctorAuthentication))
+                .thenReturn(dto);
+
+        mockMvc.perform(patch("/appointments/0/reschedule")
+                        .with(authentication(doctorAuthentication))
+                        .queryParam("date", finalDate.toString())
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(1))
+                .rescheduleAppointment(0, finalDate, doctorAuthentication);
+    }
+
+    @Test
+    void shouldFailToRescheduleWithWrongRole() throws Exception {
+        LocalDateTime finalDate = LocalDateTime.now();
+
+        mockMvc.perform(patch("/appointments/0/reschedule")
+                        .with(authentication(wrongRoleAuthentication))
+                        .queryParam("date", finalDate.toString())
+                        .with(csrf()))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(appointmentsService, times(0))
+                .rescheduleAppointment(anyInt(), any(), any());
     }
 }

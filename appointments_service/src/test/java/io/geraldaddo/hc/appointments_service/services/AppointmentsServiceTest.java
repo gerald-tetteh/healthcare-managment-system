@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.appointments_service.configurations.AppointmentsTestConfiguration;
-import io.geraldaddo.hc.appointments_service.dto.AppointmentIdsDto;
-import io.geraldaddo.hc.appointments_service.dto.AppointmentListDto;
-import io.geraldaddo.hc.appointments_service.dto.CreateAppointmentDto;
-import io.geraldaddo.hc.appointments_service.dto.DoctorAvailableDto;
+import io.geraldaddo.hc.appointments_service.dto.*;
 import io.geraldaddo.hc.appointments_service.entities.Appointment;
 import io.geraldaddo.hc.appointments_service.entities.AppointmentStatus;
 import io.geraldaddo.hc.appointments_service.exceptions.AppointmentsServerException;
@@ -25,6 +22,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -34,6 +32,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -181,6 +180,30 @@ class AppointmentsServiceTest {
     }
 
     @Test
+    public void shouldCancelAppointmentsWhenDoctorOwnsAppointments() {
+        List<Appointment> appointments = List.of(
+                Appointment.builder().doctorId(1).build(),
+                Appointment.builder().doctorId(1).build(),
+                Appointment.builder().doctorId(1).build());
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+        );
+
+        when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
+        when(appointmentsRepository.saveAll(anyList())).thenReturn(appointments);
+
+        AppointmentListDto appointmentListDto = underTest.cancelAppointments(dto, auth);
+
+        assertEquals(3, appointmentListDto.appointments().size());
+
+        verify(appointmentsRepository, times(1)).findAllById(List.of(1,2,3));
+        verify(appointmentsRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
     public void shouldFilterOutOtherDoctorsAppointments() {
         List<Appointment> appointments = List.of(
                 Appointment.builder().status(AppointmentStatus.PENDING).doctorId(1).build(),
@@ -194,12 +217,21 @@ class AppointmentsServiceTest {
         );
         when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
 
-        Stream<Appointment> appointmentStream = underTest.setAppointmentsStatus(dto, auth);
+        // approving appointments
+        Stream<Appointment> appointmentStream = underTest.setAppointmentsToScheduled(dto, auth);
 
         List<Appointment> appointmentList = appointmentStream
                 .peek(ap -> assertEquals(AppointmentStatus.SCHEDULED, ap.getStatus()))
                 .toList();
         assertEquals(1, appointmentList.size());
+
+        // canceling appointments
+        Stream<Appointment> canceledAppointmentStream = underTest.setAppointmentsToCanceled(dto, auth);
+
+        List<Appointment> canceledAppointmentList = canceledAppointmentStream
+                .peek(ap -> assertEquals(AppointmentStatus.CANCELED, ap.getStatus()))
+                .toList();
+        assertEquals(1, canceledAppointmentList.size());
     }
 
     @Test
@@ -216,11 +248,104 @@ class AppointmentsServiceTest {
         );
         when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
 
-        Stream<Appointment> appointmentStream = underTest.setAppointmentsStatus(dto, auth);
+        Stream<Appointment> appointmentStream = underTest.setAppointmentsToScheduled(dto, auth);
 
         List<Appointment> appointmentList = appointmentStream
                 .peek(ap -> assertEquals(AppointmentStatus.SCHEDULED, ap.getStatus()))
                 .toList();
         assertEquals(2, appointmentList.size());
+    }
+
+    @Test
+    public void shouldOnlyCancelActiveOrPendingAppointments() {
+        List<Appointment> appointments = List.of(
+                Appointment.builder().status(AppointmentStatus.PENDING).doctorId(1).build(),
+                Appointment.builder().status(AppointmentStatus.SCHEDULED).doctorId(1).build(),
+                Appointment.builder().status(AppointmentStatus.CANCELED).doctorId(1).build());
+        AppointmentIdsDto dto = new AppointmentIdsDto(List.of(1,2,3));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_DOCTOR"))
+        );
+        when(appointmentsRepository.findAllById(anyList())).thenReturn(appointments);
+
+        Stream<Appointment> appointmentStream = underTest.setAppointmentsToCanceled(dto, auth);
+
+        List<Appointment> appointmentList = appointmentStream
+                .peek(ap -> assertEquals(AppointmentStatus.CANCELED, ap.getStatus()))
+                .toList();
+        assertEquals(2, appointmentList.size());
+    }
+
+    @Test
+    public void shouldRescheduleAppointment() {
+        LocalDateTime initial = LocalDateTime.now();
+        LocalDateTime newTime = initial.plusHours(1);
+        Appointment appointment = Appointment.builder()
+                .appointmentId(1)
+                .dateTime(initial)
+                .patientId(0)
+                .build();
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                0,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+        );
+
+        when(appointmentsRepository.findById(1)).thenReturn(Optional.of(appointment));
+        when(appointmentsRepository.save(any(Appointment.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        AppointmentDto dto = underTest.rescheduleAppointment(1, newTime, auth);
+
+        assertEquals(dto.getDateTime(), newTime);
+        verify(appointmentsRepository, times(1)).findById(1);
+        verify(appointmentsRepository, times(1)).save(any(Appointment.class));
+    }
+
+    @Test
+    public void shouldThrowExceptionIfUserDoesNotOwnAppointment() {
+        LocalDateTime initial = LocalDateTime.now();
+        LocalDateTime newTime = initial.plusHours(1);
+        Appointment appointment = Appointment.builder()
+                .appointmentId(1)
+                .dateTime(initial)
+                .patientId(0)
+                .doctorId(1)
+                .build();
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_PATIENT"))
+        );
+        when(appointmentsRepository.findById(1)).thenReturn(Optional.of(appointment));
+
+        assertThrows(AuthorizationDeniedException.class,
+                () -> underTest.rescheduleAppointment(1, newTime, auth));
+        verify(appointmentsRepository, times(1)).findById(1);
+        verify(appointmentsRepository, times(0)).save(any());
+    }
+
+    @Test
+    public void shouldThrowExceptionIfUserHasTheWrongRole() {
+        LocalDateTime initial = LocalDateTime.now();
+        LocalDateTime newTime = initial.plusHours(1);
+        Appointment appointment = Appointment.builder()
+                .appointmentId(1)
+                .dateTime(initial)
+                .patientId(0)
+                .doctorId(1)
+                .build();
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of()
+        );
+        when(appointmentsRepository.findById(1)).thenReturn(Optional.of(appointment));
+
+        assertThrows(AuthorizationDeniedException.class,
+                () -> underTest.rescheduleAppointment(1, newTime, auth));
+        verify(appointmentsRepository, times(1)).findById(1);
+        verify(appointmentsRepository, times(0)).save(any());
     }
 }

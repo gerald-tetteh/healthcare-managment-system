@@ -9,16 +9,18 @@ import io.geraldaddo.hc.cache_module.utils.CacheUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -38,7 +40,6 @@ public class AppointmentsService {
         this.cacheUtils = cacheUtils;
     }
 
-    @CacheEvict(value = "appointments", allEntries = true)
     public AppointmentDto createAppointment(CreateAppointmentDto createAppointmentDto, String token) {
         DoctorAvailableDto availableDto = doctorsWebClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/{doctorId}/available/{date}")
@@ -100,20 +101,71 @@ public class AppointmentsService {
     }
 
     public AppointmentListDto approveAppointments(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
-        Stream<Appointment> appointmentStream = setAppointmentsStatus(appointmentIdsDto, authentication);
+        Stream<Appointment> appointmentStream = setAppointmentsToScheduled(appointmentIdsDto, authentication);
         List<AppointmentDto> dtos = appointmentsRepository
                 .saveAll(appointmentStream.toList())
                 .stream()
                 .map(this::buildAppointmentDto)
                 .toList();
+        deleteCachedAppointments(dtos);
         return new AppointmentListDto(dtos);
     }
 
-    protected Stream<Appointment> setAppointmentsStatus(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+    public AppointmentListDto cancelAppointments(AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+        Stream<Appointment> appointmentStream = setAppointmentsToCanceled(appointmentIdsDto, authentication);
+        List<AppointmentDto> dtos = appointmentsRepository
+                .saveAll(appointmentStream.toList())
+                .stream()
+                .map(this::buildAppointmentDto)
+                .toList();
+        deleteCachedAppointments(dtos);
+        return new AppointmentListDto(dtos);
+    }
+
+    public AppointmentDto rescheduleAppointment(
+            int appointmentId, LocalDateTime dateTime, Authentication authentication) {
+        Appointment appointment = getAppointmentById(appointmentId);
+        GrantedAuthority authority = authentication.getAuthorities().stream().findFirst()
+                .orElseThrow(() -> new AuthorizationDeniedException("Not authorised to perform action"));
+        int userId = (int) authentication.getPrincipal();
+        if((appointment.getPatientId() == userId && authority.getAuthority().equals("ROLE_PATIENT"))
+                || (appointment.getDoctorId() == userId && authority.getAuthority().equals("ROLE_DOCTOR"))) {
+            appointment.setDateTime(dateTime);
+            Appointment savedAppointment = appointmentsRepository.save(appointment);
+            cacheUtils.evictFromCacheByKeyMatch(
+                    "appointments", savedAppointment.getDoctorId().toString());
+            cacheUtils.evictFromCacheByKeyMatch(
+                    "appointments", savedAppointment.getPatientId().toString());
+            return this.buildAppointmentDto(savedAppointment);
+        }
+        throw new AuthorizationDeniedException("Not authorised to perform action");
+    }
+
+    protected void deleteCachedAppointments(List<AppointmentDto> dtos) {
+        dtos.stream()
+                .flatMap(ap -> Stream.of(ap.getDoctorId(), ap.getDoctorId()))
+                .distinct()
+                .forEach(id -> cacheUtils.evictFromCacheByKeyMatch("appointments", String.valueOf(id)));
+    }
+    protected Appointment getAppointmentById(int appointmentId) {
+        return appointmentsRepository.findById(appointmentId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        String.format("Appointment: %s does not exist", appointmentId)));
+    }
+    protected Stream<Appointment> setAppointmentsToScheduled(
+            AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
         return appointmentsRepository.findAllById(appointmentIdsDto.ids()).stream()
                 .filter(ap -> ap.getDoctorId() == authentication.getPrincipal()
                                 && ap.getStatus() == AppointmentStatus.PENDING)
                 .peek(ap -> ap.setStatus(AppointmentStatus.SCHEDULED));
+    }
+    protected Stream<Appointment> setAppointmentsToCanceled(
+            AppointmentIdsDto appointmentIdsDto, Authentication authentication) {
+        return appointmentsRepository.findAllById(appointmentIdsDto.ids()).stream()
+                .filter(ap -> (ap.getDoctorId() == authentication.getPrincipal()
+                        || ap.getPatientId() == authentication.getPrincipal())
+                        && ap.getStatus() != AppointmentStatus.CANCELED)
+                .peek(ap -> ap.setStatus(AppointmentStatus.CANCELED));
     }
     private AppointmentDto buildAppointmentDto(Appointment appointment) {
         return AppointmentDto.builder()
