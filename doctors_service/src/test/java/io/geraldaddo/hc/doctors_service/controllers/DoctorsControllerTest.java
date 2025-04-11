@@ -76,7 +76,7 @@ class DoctorsControllerTest {
     void shouldFailToGetDoctorsProfile() throws Exception {
         setUserWithWrongId();
         mockMvc.perform(get("/doctors/0"))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.title").value("Authorisation failed"));
     }
@@ -107,7 +107,7 @@ class DoctorsControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
                         .with(csrf()))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.title").value("Authorisation failed"));
     }

@@ -131,6 +131,7 @@ public class AppointmentsService {
         if((appointment.getPatientId() == userId && authority.getAuthority().equals("ROLE_PATIENT"))
                 || (appointment.getDoctorId() == userId && authority.getAuthority().equals("ROLE_DOCTOR"))) {
             appointment.setDateTime(dateTime);
+            appointment.setStatus(AppointmentStatus.PENDING);
             Appointment savedAppointment = appointmentsRepository.save(appointment);
             cacheUtils.evictFromCacheByKeyMatch(
                     "appointments", savedAppointment.getDoctorId().toString());

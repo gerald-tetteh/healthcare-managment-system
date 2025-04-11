@@ -286,6 +286,7 @@ class AppointmentsServiceTest {
                 .appointmentId(1)
                 .dateTime(initial)
                 .patientId(0)
+                .doctorId(1)
                 .build();
         Authentication auth = new UsernamePasswordAuthenticationToken(
                 0,
@@ -299,6 +300,7 @@ class AppointmentsServiceTest {
         AppointmentDto dto = underTest.rescheduleAppointment(1, newTime, auth);
 
         assertEquals(dto.getDateTime(), newTime);
+        assertEquals(dto.getStatus(), AppointmentStatus.PENDING);
         verify(appointmentsRepository, times(1)).findById(1);
         verify(appointmentsRepository, times(1)).save(any(Appointment.class));
     }
