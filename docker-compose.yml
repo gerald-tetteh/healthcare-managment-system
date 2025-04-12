@@ -61,6 +61,15 @@ services:
     depends_on:
       - app-db
       - kafka-server
+  medical-records-service:
+    container_name: medical-records-service
+    build:
+      context: medical_records_service
+    environment:
+      - port=8084
+      - secret_key=${SECRET_KEY}
+    networks:
+      - gateway-service-network
 
   app-db:
     container_name: app-db
