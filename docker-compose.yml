@@ -68,6 +68,9 @@ services:
     environment:
       - port=8084
       - secret_key=${SECRET_KEY}
+      - mongo_url=${DB_MEDICAL_RECORDS}
+    depends_on:
+      - mongo-server
     networks:
       - gateway-service-network
 
@@ -83,6 +86,13 @@ services:
       - db_names=${USERS_DB},${APPOINTMENTS_DB}
     networks:
       - gateway-service-network
+  mongo-server:
+    container_name: mongo-server
+    image: mongodb/mongodb-community-server:7.0-ubuntu2204
+    networks:
+      - gateway-service-network
+    ports:
+      - 27017:27017
 
   redis-server:
     image: redis:8.0-M04-alpine

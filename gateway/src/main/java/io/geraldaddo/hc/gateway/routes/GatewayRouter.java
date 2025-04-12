@@ -22,6 +22,9 @@ public class GatewayRouter {
                         http("http://doctors-service:8082"))
                 .andRoute(methods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PATCH, HttpMethod.DELETE)
                                 .and(path("/appointments/**")),
-                        http("http://appointments-service:8083"));
+                        http("http://appointments-service:8083"))
+                .andRoute(methods(HttpMethod.GET, HttpMethod.POST, HttpMethod.DELETE)
+                                .and(path("/medical-records/**")),
+                        http("http://medical-records-service:8084"));
     }
 }
