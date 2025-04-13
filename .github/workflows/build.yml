@@ -1,20 +1,20 @@
-name: Build project Maven
+name: Build and Test Project
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
-  test:
-
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # ----- JAVA BACKEND -----
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -30,12 +30,33 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build with Maven
+      - name: Run Java tests with Surefire
         run: mvn -B clean test
 
-      - name: Upload Test Reports
-        if: always()  # Ensure reports are uploaded even on test failure
+      - name: Upload Surefire Reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
           path: target/surefire-reports/
+
+      # ----- JS Services -----
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./medical_records_service
+
+      - name: Run JS tests
+        run: npm run test
+        working-directory: ./medical_records_service
+
+      - name: Upload JS test reports (if applicable)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: js-test-reports
+          path: ./medical_records_service/coverage/
