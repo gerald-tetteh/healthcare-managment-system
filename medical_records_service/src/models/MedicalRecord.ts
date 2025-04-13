@@ -1,39 +1,41 @@
+import { ObjectId } from "@fastify/mongodb";
 import Attachment from "./Attachment";
 import Diagnosis from "./Diagnosis";
 import LabTest from "./LabTest";
 import Prescription from "./Prescription";
 import VisitType from "./VisitType";
+import MongoDocument from "./MongoDocument";
 
-class MedicalRecord {
-  private recordId: Number;
-  private userId: Number;
-  private doctorId: Number;
-  private visitType: VisitType;
-  private symptoms: string[];
-  private diagnosis: Diagnosis;
-  private prescriptions: Prescription[];
-  private labTests: LabTest[];
-  private notes: string;
-  private attachments: Attachment[];
-  private createdAt: Date;
-  private updatedAt: Date;
+class MedicalRecord implements MongoDocument {
+  _id?: ObjectId;
+  patientId: Number;
+  doctorId: Number;
+  visitType: VisitType;
+  symptoms: string[];
+  diagnosis: Diagnosis;
+  prescriptions: Prescription[];
+  labTests: LabTest[];
+  notes: string;
+  attachments: Attachment[];
+  createdAt: Date;
+  updatedAt: Date;
 
   constructor(
-    recordId: Number,
-    userId: Number,
+    _id: string,
+    patientId: Number,
     doctorId: Number,
     visitType: VisitType,
-    symptoms: string[],
+    symptoms: string[] = [],
     diagnosis: Diagnosis,
     prescriptions: Prescription[],
-    labTests: LabTest[],
+    labTests: LabTest[] = [],
     notes: string,
-    attachments: Attachment[],
+    attachments: Attachment[] = [],
     createdAt: Date = new Date(),
     updatedAt: Date = new Date()
   ) {
-    this.recordId = recordId;
-    this.userId = userId;
+    this._id = _id ? new ObjectId(_id) : undefined;
+    this.patientId = patientId;
     this.doctorId = doctorId;
     this.visitType = visitType;
     this.symptoms = symptoms;
@@ -46,52 +48,19 @@ class MedicalRecord {
     this.updatedAt = updatedAt;
   }
 
-  public getRecordId(): Number {
-    return this.recordId;
-  }
-
-  public getUserId(): Number {
-    return this.userId;
-  }
-
-  public getDoctorId(): Number {
-    return this.doctorId;
-  }
-
-  public getVisitType(): VisitType {
-    return this.visitType;
-  }
-
-  public getSymptoms(): string[] {
-    return this.symptoms;
-  }
-
-  public getDiagnosis(): Diagnosis {
-    return this.diagnosis;
-  }
-
-  public getPrescriptions(): Prescription[] {
-    return this.prescriptions;
-  }
-
-  public getLabTests(): LabTest[] {
-    return this.labTests;
-  }
-
-  public getNotes(): string {
-    return this.notes;
-  }
-
-  public getAttachments(): Attachment[] {
-    return this.attachments;
-  }
-
-  public getCreatedAt(): Date {
-    return this.createdAt;
-  }
-
-  public getUpdatedAt(): Date {
-    return this.updatedAt;
+  static fromJson(json: any): MedicalRecord {
+    return new MedicalRecord(
+      json._id,
+      json.patientId,
+      json.doctorId,
+      json.visitType,
+      json.symptoms,
+      json.diagnosis,
+      json.prescriptions,
+      json.labTests,
+      json.notes,
+      json.attachments,
+    );
   }
 }
 

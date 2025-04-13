@@ -15,6 +15,14 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts
 ): Promise<void> => {
   // Place here your custom code!
+  fastify.setErrorHandler((error, request, reply) => {
+    fastify.log.error(error);
+    reply.status(500).send({
+      title: "Internal Server Error",
+      message: "An unexpected error occurred",
+      statusCode: "INTERNAL_SERVER_ERROR"
+    });
+  });
 
   // Do not touch the following lines
 
