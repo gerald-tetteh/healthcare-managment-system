@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { createMedicalRecordSchema } from '../../schemas/schemas';
+import { createMedicalRecordSchema, getMedicalRecordSchema } from '../../schemas/schemas';
 import MedicalRecord from '../../models/MedicalRecord';
 
 const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
@@ -8,7 +8,8 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     preHandler: [fastify.authenticate, fastify.authorizeByRole(["ROLE_DOCTOR", "ROLE_ADMIN"])] 
   }, async function (request, reply) {
     const record = MedicalRecord.fromJson(request.body);
-    const result = await fastify.mongo.db?.collection<MedicalRecord>('medicalRecords').insertOne(record);
+    const encryptedRecord = fastify.encrypt(record);
+    const result = await fastify.mongo.db?.collection('medicalRecords').insertOne(encryptedRecord);
     fastify.log.info(`Inserted medical record with id: ${result?.insertedId}`);
     return {
       status: 'success',
@@ -17,6 +18,18 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         insertedId: result?.insertedId,
       }
     };
+  });
+
+  fastify.get("/:id", {
+    schema: getMedicalRecordSchema,
+    preHandler: [fastify.authenticate, fastify.authorizeByRole(["ROLE_DOCTOR", "ROLE_ADMIN"])]
+  }, async function (request, reply) {
+    const id = (request.params as { id: string }).id;
+    const record = await fastify.mongo.db?.collection('medicalRecords').findOne(
+      { _id: new fastify.mongo.ObjectId(id) }
+    );
+    const decryptedRecord = fastify.decrypt(record);
+    return decryptedRecord;
   });
 };
 

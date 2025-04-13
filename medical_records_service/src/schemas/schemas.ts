@@ -71,4 +71,14 @@ export const createMedicalRecordSchema: FastifySchema = {
       }
     }
   },
-}
+};
+
+export const getMedicalRecordSchema: FastifySchema = {
+  params: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' }
+    }
+  }
+};
