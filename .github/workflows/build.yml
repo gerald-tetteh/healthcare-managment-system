@@ -49,10 +49,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
         working-directory: ./medical_records_service
-
-      - name: Debug test file paths
-        run: ls -lR test
-        working-directory: ./medical_records_service
         
       - name: Run JS tests
         run: npm run test
