@@ -1,5 +1,5 @@
 import { beforeEach, describe, it } from 'node:test'
-import * as assert from 'node:assert'
+import * as assert from 'node:assert/strict'
 
 import Fastify, { FastifyInstance } from 'fastify'
 import jwt from '../../src/plugins/jwt';
@@ -7,7 +7,6 @@ import jwt from '../../src/plugins/jwt';
 describe("JWT plugin", () => {
   let fastify: FastifyInstance;
   beforeEach(async () => {
-    process.env.secret_key = 'secret';
     fastify = Fastify();
     await fastify.register(jwt, {});
   });

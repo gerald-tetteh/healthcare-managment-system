@@ -1,0 +1,8 @@
+#!/bin/bash
+# This script is used to set up the environment for testing
+# It sets the environment variables required for the test
+
+export encryption_key=R9csi8yDjqO7G34+ZsNlmrl5Iw/TU1KFa/+nMR+fAkA=
+export secret_key=secret
+
+npm run test:start
