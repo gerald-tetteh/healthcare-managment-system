@@ -11,10 +11,12 @@ declare module "@fastify/jwt" {
     };
   }
 }
-declare module 'fastify' {
+declare module "fastify" {
   export interface FastifyInstance {
     authenticate(request: FastifyRequest, reply: FastifyReply): Promise<void>;
-    authorizeByRole(roles: string[]): (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+    authorizeByRole(
+      roles: string[]
+    ): (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
   }
 }
 
@@ -23,23 +25,30 @@ export default fp(async (fastify, options) => {
     secret: Buffer.from(process.env.secret_key!, "base64"),
   });
 
-  fastify.decorate("authenticate", async (request: FastifyRequest, reply: FastifyReply) => {
-    try {
-      await request.jwtVerify();
-    } catch (err) {
-      reply.send(err);
+  fastify.decorate(
+    "authenticate",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        await request.jwtVerify();
+      } catch (err) {
+        reply.status(401).send({
+          title: "Authentication Failed",
+          message: "Invalid or missing token",
+          statusCode: "UNAUTHORIZED",
+        });
+      }
     }
-  });
+  );
 
   fastify.decorate("authorizeByRole", (roles: string[]) => {
     return async (request: FastifyRequest, reply: FastifyReply) => {
       const user = request.user;
-      const hasRole = user && user.roles.some(role => roles.includes(role));
+      const hasRole = user && user.roles.some((role) => roles.includes(role));
       if (!hasRole) {
-        reply.status(403).send({ 
-          title: "Authorization Failed", 
-          message: "Cannot access this resource", 
-          statusCode: "FORBIDDEN" 
+        reply.status(403).send({
+          title: "Authorization Failed",
+          message: "Cannot access this resource",
+          statusCode: "FORBIDDEN",
         });
       }
     };

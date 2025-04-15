@@ -4,5 +4,7 @@
 
 export encryption_key=R9csi8yDjqO7G34+ZsNlmrl5Iw/TU1KFa/+nMR+fAkA=
 export secret_key=secret
+export mongo_url=mongodb://localhost:27017/test
+export NODE_ENV=test
 
 npm run test:start

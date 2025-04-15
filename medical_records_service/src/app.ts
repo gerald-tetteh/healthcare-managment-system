@@ -1,26 +1,30 @@
-import { join } from 'node:path'
-import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
-import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
+import { join } from 'node:path';
+import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload';
+import { FastifyPluginAsync, FastifyServerOptions } from 'fastify';
+import ServerException from './models/ServerException';
 
-export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {
-
-}
+export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {}
 // Pass --options via CLI arguments in command to enable these options.
 const options: AppOptions = {
   logger: true
-}
+};
 
-const app: FastifyPluginAsync<AppOptions> = async (
-  fastify,
-  opts
-): Promise<void> => {
+const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {
   // Place here your custom code!
   fastify.setErrorHandler((error, request, reply) => {
-    fastify.log.error(error);
+    if (error instanceof ServerException) {
+      reply.status(500).send({
+        title: 'Internal Server Error',
+        message: error.message,
+        statusCode: error.statusCode
+      });
+      return;
+    }
+    fastify.log.error('Server exception occurred: ', error);
     reply.status(500).send({
-      title: "Internal Server Error",
-      message: "An unexpected error occurred",
-      statusCode: "INTERNAL_SERVER_ERROR"
+      title: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+      statusCode: 'INTERNAL_SERVER_ERROR'
     });
   });
 
@@ -33,7 +37,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
   void fastify.register(AutoLoad, {
     dir: join(__dirname, 'plugins'),
     options: opts
-  })
+  });
 
   // This loads all plugins defined in routes
   // define your routes in one of these
@@ -41,8 +45,8 @@ const app: FastifyPluginAsync<AppOptions> = async (
   void fastify.register(AutoLoad, {
     dir: join(__dirname, 'routes'),
     options: opts
-  })
-}
+  });
+};
 
-export default app
-export { app, options }
+export default app;
+export { app, options };

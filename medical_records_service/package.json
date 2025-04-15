@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "./test/scripts/test",
-    "test:start": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.ts')",
+    "test:start": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.ts' ! -name '*.d.ts')",
     "start": "npm run build:ts && node dist/index.js",
     "start:docker": "node dist/index.js",
     "build:ts": "tsc",
