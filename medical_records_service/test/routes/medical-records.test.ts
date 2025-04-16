@@ -8,6 +8,7 @@ import mongoMock from '../__mocks__/mongo.mock';
 import medicalRecords from '../../src/routes/medical-records';
 import encryption from '../../src/plugins/encryption';
 import { ObjectId } from '@fastify/mongodb';
+import multipart from '../../src/plugins/multipart';
 
 describe('Medical Records', () => {
   let fastify: FastifyInstance;
@@ -18,6 +19,7 @@ describe('Medical Records', () => {
     await fastify.register(mongoMock);
     await fastify.register(medicalRecords);
     await fastify.register(encryption);
+    await fastify.register(multipart);
     await fastify.ready();
   });
 
