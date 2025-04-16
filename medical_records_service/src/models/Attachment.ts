@@ -1,23 +1,21 @@
+import { ObjectId } from '@fastify/mongodb';
+
 class Attachment {
   private fileName: string;
-  private fileUrl: string;
+  private fileId: ObjectId;
   private mimeType: string;
 
-  constructor(
-    fileName: string,
-    fileUrl: string,
-    mimeType: string
-  ) {
+  constructor(fileName: string, fileId: ObjectId, mimeType: string) {
     this.fileName = fileName;
-    this.fileUrl = fileUrl;
+    this.fileId = fileId;
     this.mimeType = mimeType;
   }
 
   public getFileName() {
     return this.fileName;
   }
-  public getFileUrl() {
-    return this.fileUrl;
+  public getFileId() {
+    return this.fileId;
   }
   public getMimeType() {
     return this.mimeType;

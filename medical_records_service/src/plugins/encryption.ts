@@ -1,10 +1,10 @@
-import fp from "fastify-plugin";
-import crypto from "node:crypto";
+import fp from 'fastify-plugin';
+import crypto from 'node:crypto';
 
 const encryptionKey = Buffer.from(process.env.encryption_key!, 'base64');
 const iv_length = 12;
-const algorithm = 'aes-256-gcm'
-const defaultKeySkips = ["_id", "createdAt", "updatedAt"];
+const algorithm = 'aes-256-gcm';
+const defaultKeySkips = ['_id', 'createdAt', 'updatedAt', 'attachments'];
 
 const encrypt = (value: string) => {
   const iv = crypto.randomBytes(iv_length);
@@ -26,16 +26,16 @@ const decrypt = (content: string, iv: string, tag: string) => {
 };
 
 const deepEncrypt = (obj: any, skips: string[] = defaultKeySkips): any => {
-  if(Array.isArray(obj)) {
+  if (Array.isArray(obj)) {
     return obj.map(item => deepEncrypt(item, skips));
   }
 
-  if(typeof obj === 'object' && obj !== null) {
+  if (typeof obj === 'object' && obj !== null) {
     const encryptedObj: any = {};
-    for(const key in obj) {
-      if(skips.includes(key)) {
+    for (const key in obj) {
+      if (skips.includes(key)) {
         encryptedObj[key] = obj[key];
-      } else if(typeof obj[key] === 'string') {
+      } else if (typeof obj[key] === 'string') {
         encryptedObj[key] = encrypt(obj[key]);
       } else {
         encryptedObj[key] = deepEncrypt(obj[key], skips);
@@ -43,27 +43,27 @@ const deepEncrypt = (obj: any, skips: string[] = defaultKeySkips): any => {
     }
     return encryptedObj;
   }
-  if(typeof obj === 'string') {
+  if (typeof obj === 'string') {
     return encrypt(obj);
   }
   return obj;
-}
+};
 
 const deepDecrypt = (obj: any, skips: string[] = defaultKeySkips): any => {
-  if(Array.isArray(obj)) {
+  if (Array.isArray(obj)) {
     return obj.map(item => deepDecrypt(item, skips));
   }
 
-  if(typeof obj === 'object' && obj !== null && 'content' in obj) {
+  if (typeof obj === 'object' && obj !== null && 'content' in obj) {
     return decrypt(obj.content, obj.iv, obj.tag);
   }
 
-  if(typeof obj === 'object' && obj !== null) {
+  if (typeof obj === 'object' && obj !== null) {
     const decryptedObj: any = {};
-    for(const key in obj) {
-      if(skips.includes(key)) {
+    for (const key in obj) {
+      if (skips.includes(key)) {
         decryptedObj[key] = obj[key];
-      } else if(typeof obj[key] === 'object' && obj[key] !== null && 'content' in obj[key]) {
+      } else if (typeof obj[key] === 'object' && obj[key] !== null && 'content' in obj[key]) {
         decryptedObj[key] = decrypt(obj[key].content, obj[key].iv, obj[key].tag);
       } else {
         decryptedObj[key] = deepDecrypt(obj[key], skips);
@@ -72,7 +72,7 @@ const deepDecrypt = (obj: any, skips: string[] = defaultKeySkips): any => {
     return decryptedObj;
   }
   return obj;
-}
+};
 
 declare module 'fastify' {
   interface FastifyInstance {

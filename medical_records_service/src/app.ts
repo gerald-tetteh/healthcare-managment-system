@@ -20,7 +20,7 @@ const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void>
       });
       return;
     }
-    fastify.log.error('Server exception occurred: ', error);
+    fastify.log.error(error, 'Server exception occurred');
     reply.status(500).send({
       title: 'Internal Server Error',
       message: 'An unexpected error occurred',

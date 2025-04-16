@@ -1,6 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { createMedicalRecordSchema, getMedicalRecordSchema } from '../../schemas/schemas';
 import MedicalRecord from '../../models/MedicalRecord';
+import { pipeline } from 'node:stream/promises';
+import Attachment from '../../models/Attachment';
 
 const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.post(
@@ -13,8 +15,8 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     async function (request, reply) {
       if (request.validationError) {
         fastify.log.error(
-          'Schema validation failed for create medical record',
-          request.validationError
+          request.validationError,
+          'Schema validation failed for create medical record'
         );
         reply.status(400).send({
           title: 'Bad Request',
@@ -49,8 +51,8 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     async function (request, reply) {
       if (request.validationError) {
         fastify.log.error(
-          'Schema validation failed for get medical record',
-          request.validationError
+          request.validationError,
+          'Schema validation failed for get medical record'
         );
         reply.status(400).send({
           title: 'Bad Request',
@@ -84,6 +86,57 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         `User: ${request.user.userId} fetched medical record with id: ${record?._id}`
       );
       return decryptedRecord;
+    }
+  );
+
+  fastify.post(
+    '/:id/attachments',
+    {
+      preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
+    },
+    async function (request, reply) {
+      const recordId = (request.params as { id: string }).id;
+      const record = await fastify.findOne(recordId, fastify);
+      if (!record) {
+        reply.status(404).send({
+          title: 'Record Not Found',
+          message: 'The requested record does not exist',
+          statusCode: 'NOT_FOUND'
+        });
+        return;
+      }
+      const data = request.files();
+      const uploadedFiles: Attachment[] = [];
+      for await (const part of data) {
+        const fileStream = fastify.bucket.openUploadStream(part.filename, {
+          metadata: {
+            recordId: (request.params as { id: string }).id,
+            uploadedAt: new Date(),
+            uploadedBy: request.user.userId,
+            contentType: part.mimetype
+          }
+        });
+        await pipeline(part.file, fileStream);
+        uploadedFiles.push(new Attachment(part.filename, fileStream.id, part.mimetype));
+        fastify.log.info(`User: ${request.user.userId} uploaded file with id: ${fileStream.id}`);
+      }
+      if (uploadedFiles.length === 0) {
+        reply.status(400).send({
+          title: 'Bad Request',
+          message: 'No files uploaded',
+          statusCode: 'BAD_REQUEST'
+        });
+        return;
+      }
+      await fastify.addAttachments(record, uploadedFiles);
+      fastify.log.info(
+        `User: ${request.user.userId} added attachments to medical record with id: ${record._id}`
+      );
+      return {
+        status: 'success',
+        message: 'File uploaded successfully',
+        data: uploadedFiles
+      };
     }
   );
 };
