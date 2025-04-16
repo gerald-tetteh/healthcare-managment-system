@@ -7,6 +7,7 @@ import jwt from '../../src/plugins/jwt';
 import mongoMock from '../__mocks__/mongo.mock';
 import medicalRecords from '../../src/routes/medical-records';
 import encryption from '../../src/plugins/encryption';
+import { ObjectId } from '@fastify/mongodb';
 
 describe('Medical Records', () => {
   let fastify: FastifyInstance;
@@ -118,5 +119,55 @@ describe('Medical Records', () => {
     assert.equal(res.statusCode, 400);
     assert.equal(responseBody.title, 'Bad Request');
     assert.equal(responseBody.statusCode, 'BAD_REQUEST');
+  });
+
+  it('should get medical record by id', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/${new ObjectId()}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+  });
+
+  it('should return 404 if record not found', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/invalid`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(
+      res.payload,
+      '{"title":"Record Not Found","message":"The requested record does not exist","statusCode":"NOT_FOUND"}'
+    );
+  });
+
+  it("should return 403 if user is a patient and tries to access another patient's record", async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_PATIENT'] });
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/${new ObjectId()}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(
+      res.payload,
+      '{"title":"Authorization Failed","message":"Cannot access this resource","statusCode":"FORBIDDEN"}'
+    );
   });
 });
