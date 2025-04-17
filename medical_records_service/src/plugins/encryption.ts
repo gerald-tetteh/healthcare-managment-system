@@ -4,7 +4,7 @@ import crypto from 'node:crypto';
 const encryptionKey = Buffer.from(process.env.encryption_key!, 'base64');
 const iv_length = 12;
 const algorithm = 'aes-256-gcm';
-const defaultKeySkips = ['_id', 'createdAt', 'updatedAt', 'attachments'];
+const defaultKeySkips = ['_id', 'createdAt', 'updatedAt', 'fileId'];
 
 const encrypt = (value: string) => {
   const iv = crypto.randomBytes(iv_length);

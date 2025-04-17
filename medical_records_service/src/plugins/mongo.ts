@@ -58,10 +58,11 @@ export default fp(async (fastify, options) => {
     'addAttachments',
     async (record: WithId<Document>, attachments: Attachment[]) => {
       try {
+        const encryptedAttachments = fastify.encrypt(attachments);
         return fastify.mongo.db?.collection<MedicalRecord>('medicalRecords').updateOne(
           { _id: record._id },
           {
-            $push: { attachments: { $each: attachments } }
+            $push: { attachments: { $each: encryptedAttachments } }
           }
         );
       } catch (error) {

@@ -1,10 +1,10 @@
-import { ObjectId } from "@fastify/mongodb";
-import Attachment from "./Attachment";
-import Diagnosis from "./Diagnosis";
-import LabTest from "./LabTest";
-import Prescription from "./Prescription";
-import VisitType from "./VisitType";
-import MongoDocument from "./MongoDocument";
+import { ObjectId } from '@fastify/mongodb';
+import Attachment from './Attachment';
+import Diagnosis from './Diagnosis';
+import LabTest from './LabTest';
+import Prescription from './Prescription';
+import VisitType from './VisitType';
+import MongoDocument from './MongoDocument';
 
 class MedicalRecord implements MongoDocument {
   _id?: ObjectId;
@@ -59,7 +59,7 @@ class MedicalRecord implements MongoDocument {
       json.prescriptions,
       json.labTests,
       json.notes,
-      json.attachments,
+      json.attachments
     );
   }
 }
