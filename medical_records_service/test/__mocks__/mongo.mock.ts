@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
   OptionalId,
@@ -11,6 +11,7 @@ import {
 } from 'mongodb';
 import Attachment from '../../src/models/Attachment';
 import { MultipartFile } from '@fastify/multipart';
+import { Readable } from 'node:stream';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -43,7 +44,18 @@ export default fp(async (fastify, options) => {
     return {
       _id: new ObjectId(id),
       patientId: 0,
-      doctorId: 1
+      doctorId: 1,
+      visitType: 'InPerson',
+      symptoms: ['fever', 'cough'],
+      diagnosis: {
+        code: 'A01',
+        description: 'Test Diagnosis'
+      },
+      notes: 'This is a test medical record',
+      attachments: [
+        new Attachment('test.pdf', new ObjectId(id), 'application/pdf'),
+        new Attachment('test2.pdf', new ObjectId(), 'application/pdf')
+      ]
     };
   });
   fastify.decorate(
@@ -65,5 +77,11 @@ export default fp(async (fastify, options) => {
       part.file.on('error', reject);
     });
     return new ObjectId();
+  });
+  fastify.decorate('getAttachment', async (id: string, reply: FastifyReply) => {
+    const readable = new Readable();
+    readable.push('test');
+    readable.push(null);
+    reply.type('application/pdf').send(readable);
   });
 });

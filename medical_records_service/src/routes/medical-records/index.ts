@@ -50,18 +50,6 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       ]
     },
     async function (request, reply) {
-      if (request.validationError) {
-        fastify.log.error(
-          request.validationError,
-          'Schema validation failed for get medical record'
-        );
-        reply.status(400).send({
-          title: 'Bad Request',
-          message: request.validationError.message,
-          statusCode: 'BAD_REQUEST'
-        });
-        return;
-      }
       const recordId = (request.params as { id: string }).id;
       const record = await fastify.findOne(recordId, fastify);
       if (!record) {
@@ -144,8 +132,8 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     async function (request, reply) {
       const recordId = (request.params as { recordId: string }).recordId;
       const attachmentId = (request.params as { id: string }).id;
-      const record = MedicalRecord.fromJson(await fastify.findOne(recordId, fastify));
-      if (!record) {
+      const result = await fastify.findOne(recordId, fastify);
+      if (!result) {
         reply.status(404).send({
           title: 'Record Not Found',
           message: 'The requested record does not exist',
@@ -153,6 +141,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         });
         return;
       }
+      const record = MedicalRecord.fromJson(result);
       const user = request.user;
       const isPatient = user && user.roles.some(role => role === 'ROLE_PATIENT');
       if (isPatient && record.patientId !== user.userId) {

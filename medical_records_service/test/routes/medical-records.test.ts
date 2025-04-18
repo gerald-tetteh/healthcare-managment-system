@@ -271,4 +271,76 @@ describe('Medical Records', () => {
       '{"title":"Bad Request","message":"No files were uploaded","statusCode":"BAD_REQUEST"}'
     );
   });
+
+  it('should get attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/${testId}/attachments/${testId}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+  });
+
+  it('should return 404 if attachment not found', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/${testId}/attachments/${new ObjectId()}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(
+      res.payload,
+      '{"title":"Attachment Not Found","message":"The requested attachment does not exist","statusCode":"NOT_FOUND"}'
+    );
+  });
+
+  it('should return 403 if user is not authorized to get attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_PATIENT'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/${testId}/attachments/${testId}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(
+      res.payload,
+      '{"title":"Authorization Failed","message":"Cannot access this resource","statusCode":"FORBIDDEN"}'
+    );
+  });
+
+  it('should return 404 if record not found when getting attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'GET',
+      url: `/invalid/attachments/${testId}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(
+      res.payload,
+      '{"title":"Record Not Found","message":"The requested record does not exist","statusCode":"NOT_FOUND"}'
+    );
+  });
 });

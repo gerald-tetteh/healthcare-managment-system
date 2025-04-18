@@ -56,10 +56,10 @@ class MedicalRecord implements MongoDocument {
       VisitType[json.visitType as keyof typeof VisitType],
       json.symptoms,
       Diagnosis.fromJson(json.diagnosis),
-      (json.prescriptions as []).map((prescription: any) => Prescription.fromJson(prescription)),
-      (json.labTests as []).map((labTest: any) => LabTest.fromJson(labTest)),
+      (json.prescriptions ?? []).map((prescription: any) => Prescription.fromJson(prescription)),
+      (json.labTests ?? []).map((labTest: any) => LabTest.fromJson(labTest)),
       json.notes,
-      (json.attachments as []).map((attachment: any) => Attachment.fromJson(attachment)),
+      (json.attachments ?? []).map((attachment: any) => Attachment.fromJson(attachment)),
       json.createdAt ? new Date(json.createdAt) : new Date(),
       json.updatedAt ? new Date(json.updatedAt) : new Date()
     );
