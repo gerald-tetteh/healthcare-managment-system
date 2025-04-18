@@ -1,17 +1,10 @@
-import { FastifySchema } from "fastify";
-import VisitType from "../models/VisitType";
+import { FastifySchema } from 'fastify';
+import VisitType from '../models/VisitType';
 
 export const createMedicalRecordSchema: FastifySchema = {
   body: {
-    type: "object",
-    required: [
-      'patientId',
-      'doctorId',
-      'visitType',
-      'symptoms',
-      'diagnosis',
-      'notes',
-    ],
+    type: 'object',
+    required: ['patientId', 'doctorId', 'visitType', 'symptoms', 'diagnosis', 'notes'],
     properties: {
       patientId: { type: 'number' },
       doctorId: { type: 'number' },
@@ -28,7 +21,7 @@ export const createMedicalRecordSchema: FastifySchema = {
         required: ['icd10Code', 'description'],
         properties: {
           icd10Code: { type: 'string' },
-          description: { type: 'string' },
+          description: { type: 'string' }
         }
       },
       prescriptions: {
@@ -69,16 +62,6 @@ export const createMedicalRecordSchema: FastifySchema = {
           }
         }
       }
-    }
-  },
-};
-
-export const getMedicalRecordSchema: FastifySchema = {
-  params: {
-    type: 'object',
-    required: ['id'],
-    properties: {
-      id: { type: 'string' }
     }
   }
 };

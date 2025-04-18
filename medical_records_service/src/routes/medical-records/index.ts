@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { createMedicalRecordSchema, getMedicalRecordSchema } from '../../schemas/schemas';
+import { createMedicalRecordSchema } from '../../schemas/schemas';
 import MedicalRecord from '../../models/MedicalRecord';
 import Attachment from '../../models/Attachment';
 
@@ -43,9 +43,11 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
   fastify.get(
     '/:id',
     {
-      schema: getMedicalRecordSchema,
       attachValidation: true,
-      preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
+      preHandler: [
+        fastify.authenticate,
+        fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_PATIENT'])
+      ]
     },
     async function (request, reply) {
       if (request.validationError) {
@@ -131,7 +133,51 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     }
   );
 
-  // get attachment
+  fastify.get(
+    '/:recordId/attachments/:id',
+    {
+      preHandler: [
+        fastify.authenticate,
+        fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_PATIENT'])
+      ]
+    },
+    async function (request, reply) {
+      const recordId = (request.params as { recordId: string }).recordId;
+      const attachmentId = (request.params as { id: string }).id;
+      const record = MedicalRecord.fromJson(await fastify.findOne(recordId, fastify));
+      if (!record) {
+        reply.status(404).send({
+          title: 'Record Not Found',
+          message: 'The requested record does not exist',
+          statusCode: 'NOT_FOUND'
+        });
+        return;
+      }
+      const user = request.user;
+      const isPatient = user && user.roles.some(role => role === 'ROLE_PATIENT');
+      if (isPatient && record.patientId !== user.userId) {
+        reply.status(403).send({
+          title: 'Authorization Failed',
+          message: 'Cannot access this resource',
+          statusCode: 'FORBIDDEN'
+        });
+        return;
+      }
+      const attachment = record.attachments.find(
+        (attachment: Attachment) => attachment.getFileId().toString() === attachmentId
+      );
+      if (!attachment) {
+        reply.status(404).send({
+          title: 'Attachment Not Found',
+          message: 'The requested attachment does not exist',
+          statusCode: 'NOT_FOUND'
+        });
+        return;
+      }
+      await fastify.getAttachment(attachmentId, reply);
+      fastify.log.info(`User: ${request.user.userId} fetched attachment with id: ${attachmentId}`);
+    }
+  );
   // update record
 };
 

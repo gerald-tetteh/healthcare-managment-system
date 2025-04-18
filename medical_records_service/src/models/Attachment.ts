@@ -11,6 +11,10 @@ class Attachment {
     this.mimeType = mimeType;
   }
 
+  static fromJson(json: any): Attachment {
+    return new Attachment(json.fileName, new ObjectId(json.fileId as string), json.mimeType);
+  }
+
   public getFileName() {
     return this.fileName;
   }

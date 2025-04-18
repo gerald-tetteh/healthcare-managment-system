@@ -1,6 +1,6 @@
 import fp from 'fastify-plugin';
 import fastifyMongodb from '@fastify/mongodb';
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply } from 'fastify';
 import {
   Document,
   GridFSBucket,
@@ -28,6 +28,7 @@ declare module 'fastify' {
       attachments: Attachment[]
     ) => Promise<UpdateResult | undefined>;
     uploadAttachment: (part: MultipartFile, id: string, userId: Number) => Promise<ObjectId>;
+    getAttachment: (id: string, reply: FastifyReply) => Promise<void>;
     bucket: GridFSBucket;
   }
 }
@@ -99,6 +100,15 @@ export default fp(async (fastify, options) => {
     } catch (error) {
       fastify.log.error(error, 'Error uploading attachment');
       throw new ServerException('Could not upload attachment', 500);
+    }
+  });
+  fastify.decorate('getAttachment', async (id: string, reply: FastifyReply) => {
+    try {
+      const downloadStream = fastify.bucket.openDownloadStream(new ObjectId(id));
+      await pipeline(downloadStream, reply.raw);
+    } catch (error) {
+      fastify.log.error(error, 'Error getting attachment');
+      throw new ServerException('Could not get attachment', 500);
     }
   });
 });

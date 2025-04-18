@@ -24,6 +24,7 @@ declare module 'fastify' {
       attachments: Attachment[]
     ) => Promise<UpdateResult | undefined>;
     uploadAttachment: (part: MultipartFile, id: string, userId: Number) => Promise<ObjectId>;
+    getAttachment: (id: string, reply: FastifyReply) => Promise<void>;
     bucket: GridFSBucket;
   }
 }

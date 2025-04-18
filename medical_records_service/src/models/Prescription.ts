@@ -4,16 +4,15 @@ class Prescription {
   private frequency: string;
   private duration: Number;
 
-  constructor(
-    medicationName: string,
-    dosage: string,
-    frequency: string,
-    duration: Number
-  ) {
+  constructor(medicationName: string, dosage: string, frequency: string, duration: Number) {
     this.medicationName = medicationName;
     this.dosage = dosage;
     this.frequency = frequency;
     this.duration = duration;
+  }
+
+  static fromJson(json: any): Prescription {
+    return new Prescription(json.medicationName, json.dosage, json.frequency, json.duration);
   }
 
   public getMedicationName() {
