@@ -8,6 +8,8 @@ import mongoMock from '../__mocks__/mongo.mock';
 import medicalRecords from '../../src/routes/medical-records';
 import encryption from '../../src/plugins/encryption';
 import { ObjectId } from '@fastify/mongodb';
+import FormData from 'form-data';
+import { Readable } from 'node:stream';
 import multipart from '../../src/plugins/multipart';
 
 describe('Medical Records', () => {
@@ -16,10 +18,10 @@ describe('Medical Records', () => {
   beforeEach(async () => {
     fastify = Fastify();
     await fastify.register(jwt);
-    await fastify.register(mongoMock);
-    await fastify.register(medicalRecords);
     await fastify.register(encryption);
+    await fastify.register(mongoMock);
     await fastify.register(multipart);
+    await fastify.register(medicalRecords);
     await fastify.ready();
   });
 
@@ -170,6 +172,103 @@ describe('Medical Records', () => {
     assert.equal(
       res.payload,
       '{"title":"Authorization Failed","message":"Cannot access this resource","statusCode":"FORBIDDEN"}'
+    );
+  });
+
+  it('should upload attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const formData = new FormData();
+    formData.append('file', Readable.from(['Sample content']), {
+      filename: 'test.txt',
+      contentType: 'text/plain'
+    });
+    formData.append('file2', Readable.from(['Sample content 2.0']), {
+      filename: 'test2.txt',
+      contentType: 'text/plain'
+    });
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${new ObjectId()}/attachments`,
+      payload: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...formData.getHeaders()
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+  });
+
+  it('should return 404 if record not found when uploading attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const formData = new FormData();
+    formData.append('file', Readable.from(['Sample content']), {
+      filename: 'test.txt',
+      contentType: 'text/plain'
+    });
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/invalid/attachments`,
+      payload: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...formData.getHeaders()
+      }
+    });
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(
+      res.payload,
+      '{"title":"Record Not Found","message":"The requested record does not exist","statusCode":"NOT_FOUND"}'
+    );
+  });
+
+  it('should return 403 if user is not authorized to upload attachment', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_PATIENT'] });
+
+    const formData = new FormData();
+    formData.append('file', Readable.from(['Sample content']), {
+      filename: 'test.txt',
+      contentType: 'text/plain'
+    });
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${new ObjectId()}/attachments`,
+      payload: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...formData.getHeaders()
+      }
+    });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(
+      res.payload,
+      '{"title":"Authorization Failed","message":"Cannot access this resource","statusCode":"FORBIDDEN"}'
+    );
+  });
+
+  it('should return 400 if no files are uploaded', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${new ObjectId()}/attachments`,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data; boundary=---011000010111000001110100'
+      }
+    });
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(
+      res.payload,
+      '{"title":"Bad Request","message":"No files were uploaded","statusCode":"BAD_REQUEST"}'
     );
   });
 });

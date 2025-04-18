@@ -1,7 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { createMedicalRecordSchema, getMedicalRecordSchema } from '../../schemas/schemas';
 import MedicalRecord from '../../models/MedicalRecord';
-import { pipeline } from 'node:stream/promises';
 import Attachment from '../../models/Attachment';
 
 const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
@@ -108,22 +107,14 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       const data = request.files();
       const uploadedFiles: Attachment[] = [];
       for await (const part of data) {
-        const fileStream = fastify.bucket.openUploadStream(part.filename, {
-          metadata: {
-            recordId: (request.params as { id: string }).id,
-            uploadedAt: new Date(),
-            uploadedBy: request.user.userId,
-            contentType: part.mimetype
-          }
-        });
-        await pipeline(part.file, fileStream);
-        uploadedFiles.push(new Attachment(part.filename, fileStream.id, part.mimetype));
-        fastify.log.info(`User: ${request.user.userId} uploaded file with id: ${fileStream.id}`);
+        const id = await fastify.uploadAttachment(part, recordId, request.user.userId);
+        uploadedFiles.push(new Attachment(part.filename, id, part.mimetype));
+        fastify.log.info(`User: ${request.user.userId} uploaded file with id: ${id}`);
       }
       if (uploadedFiles.length === 0) {
         reply.status(400).send({
           title: 'Bad Request',
-          message: 'No files uploaded',
+          message: 'No files were uploaded',
           statusCode: 'BAD_REQUEST'
         });
         return;
@@ -139,6 +130,9 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       };
     }
   );
+
+  // get attachment
+  // update record
 };
 
 export default medicalRecords;
