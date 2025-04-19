@@ -141,7 +141,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         });
         return;
       }
-      const record = MedicalRecord.fromJson(result);
+      const record = MedicalRecord.fromJson(fastify.decrypt(result));
       const user = request.user;
       const isPatient = user && user.roles.some(role => role === 'ROLE_PATIENT');
       if (isPatient && record.patientId !== user.userId) {
@@ -167,7 +167,48 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(`User: ${request.user.userId} fetched attachment with id: ${attachmentId}`);
     }
   );
+
   // update record
+  fastify.put(
+    '/:id',
+    {
+      schema: createMedicalRecordSchema,
+      attachValidation: true,
+      preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
+    },
+    async function (request, reply) {
+      if (request.validationError) {
+        fastify.log.error(
+          request.validationError,
+          'Schema validation failed for update medical record'
+        );
+        reply.status(400).send({
+          title: 'Bad Request',
+          message: request.validationError.message,
+          statusCode: 'BAD_REQUEST'
+        });
+        return;
+      }
+      const recordId = (request.params as { id: string }).id;
+      const record = await fastify.findOne(recordId, fastify);
+      if (!record) {
+        reply.status(404).send({
+          title: 'Record Not Found',
+          message: 'The requested record does not exist',
+          statusCode: 'NOT_FOUND'
+        });
+        return;
+      }
+      const updatedRecord = MedicalRecord.fromJson(request.body);
+      const encryptedRecord = fastify.encrypt(updatedRecord);
+      await fastify.insertOne(encryptedRecord, fastify);
+      fastify.log.info(`User: ${request.user.userId} updated medical record with id: ${recordId}`);
+      return {
+        status: 'success',
+        message: 'Medical record updated successfully'
+      };
+    }
+  );
 };
 
 export default medicalRecords;
