@@ -1,7 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
-import { createMedicalRecordSchema } from '../../schemas/schemas';
+import { createLabTestSchema, createMedicalRecordSchema } from '../../schemas/schemas';
 import MedicalRecord from '../../models/MedicalRecord';
 import Attachment from '../../models/Attachment';
+import LabTest from '../../models/LabTest';
 
 const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.post(
@@ -167,6 +168,50 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(`User: ${request.user.userId} fetched attachment with id: ${attachmentId}`);
     }
   );
+
+  fastify.post(
+    '/:id/lab-tests',
+    {
+      schema: createLabTestSchema,
+      attachValidation: true,
+      preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
+    },
+    async function (request, reply) {
+      if (request.validationError) {
+        fastify.log.error(
+          request.validationError,
+          'Schema validation failed for create medical record'
+        );
+        reply.status(400).send({
+          title: 'Bad Request',
+          message: request.validationError.message,
+          statusCode: 'BAD_REQUEST'
+        });
+        return;
+      }
+      const recordId = (request.params as { id: string }).id;
+      const record = await fastify.findOne(recordId, fastify);
+      if (!record) {
+        reply.status(404).send({
+          title: 'Record Not Found',
+          message: 'The requested record does not exist',
+          statusCode: 'NOT_FOUND'
+        });
+        return;
+      }
+      const labTest = LabTest.fromJson(request.body);
+      const result = await fastify.addLabTest(record, labTest);
+      fastify.log.info(
+        `User: ${request.user.userId} added lab test to medical record with id: ${record._id}`
+      );
+      return {
+        status: 'success',
+        message: 'Lab test added successfully',
+        data: result
+      };
+    }
+  );
+  // get lab tests from medical record
 };
 
 export default medicalRecords;

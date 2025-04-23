@@ -372,4 +372,119 @@ describe('Medical Records', () => {
       '{"title":"Record Not Found","message":"The requested record does not exist","statusCode":"NOT_FOUND"}'
     );
   });
+
+  it('should add lab test to medical record', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${testId}/lab-tests`,
+      payload: {
+        testName: 'Blood Test',
+        result: 'Normal',
+        date: new Date().toISOString()
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+  });
+
+  it('should return 404 if record not found when adding lab test', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/invalid/lab-tests`,
+      payload: {
+        testName: 'Blood Test',
+        result: 'Normal',
+        date: new Date().toISOString()
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(
+      res.payload,
+      '{"title":"Record Not Found","message":"The requested record does not exist","statusCode":"NOT_FOUND"}'
+    );
+  });
+
+  it('should return 403 if user is not authorized to add lab test', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_PATIENT'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${testId}/lab-tests`,
+      payload: {
+        testName: 'Blood Test',
+        result: 'Normal',
+        date: new Date().toISOString()
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(
+      res.payload,
+      '{"title":"Authorization Failed","message":"Cannot access this resource","statusCode":"FORBIDDEN"}'
+    );
+  });
+
+  it('should return 400 if payload is invalid when adding lab test', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${testId}/lab-tests`,
+      payload: {
+        testName: 'Blood Test',
+        result: 'Normal'
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(
+      res.payload,
+      '{"title":"Bad Request","message":"body must have required property \'date\'","statusCode":"BAD_REQUEST"}'
+    );
+  });
+
+  it('should return 400 if payload contains unexpected fields when adding lab test', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const testId = new ObjectId();
+
+    const res = await fastify.inject({
+      method: 'POST',
+      url: `/${testId}/lab-tests`,
+      payload: {
+        testName: 'Blood Test',
+        result: 'Normal',
+        date: new Date().toISOString(),
+        unexpectedField: 'unexpectedValue'
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(
+      res.payload,
+      '{"title":"Bad Request","message":"body must NOT have additional properties","statusCode":"BAD_REQUEST"}'
+    );
+  });
 });

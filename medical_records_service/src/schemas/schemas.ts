@@ -54,3 +54,16 @@ export const createMedicalRecordSchema: FastifySchema = {
     }
   }
 };
+
+export const createLabTestSchema: FastifySchema = {
+  body: {
+    type: 'object',
+    additionalProperties: false,
+    required: ['testName', 'result', 'date'],
+    properties: {
+      testName: { type: 'string' },
+      result: { type: 'string' },
+      date: { type: 'string', format: 'date-time' }
+    }
+  }
+};

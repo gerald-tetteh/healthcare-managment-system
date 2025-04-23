@@ -15,6 +15,7 @@ import Attachment from '../models/Attachment';
 import MedicalRecord from '../models/MedicalRecord';
 import { MultipartFile } from '@fastify/multipart';
 import { pipeline } from 'node:stream/promises';
+import LabTest from '../models/LabTest';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -29,6 +30,7 @@ declare module 'fastify' {
     ) => Promise<UpdateResult | undefined>;
     uploadAttachment: (part: MultipartFile, id: string, userId: Number) => Promise<ObjectId>;
     getAttachment: (id: string, reply: FastifyReply) => Promise<void>;
+    addLabTest: (record: WithId<Document>, labTest: LabTest) => Promise<UpdateResult | undefined>;
     bucket: GridFSBucket;
   }
 }
@@ -109,6 +111,20 @@ export default fp(async (fastify, options) => {
     } catch (error) {
       fastify.log.error(error, 'Error getting attachment');
       throw new ServerException('Could not get attachment', 500);
+    }
+  });
+  fastify.decorate('addLabTest', async (record: WithId<Document>, labTest: LabTest) => {
+    try {
+      const encryptedLabTest = fastify.encrypt(labTest);
+      return fastify.mongo.db?.collection<MedicalRecord>('medicalRecords').updateOne(
+        { _id: record._id },
+        {
+          $push: { labTests: encryptedLabTest }
+        }
+      );
+    } catch (error) {
+      fastify.log.error(error, 'Error adding lab test');
+      throw new ServerException('Could not add lab test', 500);
     }
   });
 });

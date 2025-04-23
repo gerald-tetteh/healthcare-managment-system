@@ -12,6 +12,7 @@ import {
 import Attachment from '../../src/models/Attachment';
 import { MultipartFile } from '@fastify/multipart';
 import { Readable } from 'node:stream';
+import LabTest from '../../src/models/LabTest';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -26,6 +27,7 @@ declare module 'fastify' {
     ) => Promise<UpdateResult | undefined>;
     uploadAttachment: (part: MultipartFile, id: string, userId: Number) => Promise<ObjectId>;
     getAttachment: (id: string, reply: FastifyReply) => Promise<void>;
+    addLabTest: (record: WithId<Document>, labTest: LabTest) => Promise<UpdateResult | undefined>;
     bucket: GridFSBucket;
   }
 }
@@ -83,5 +85,14 @@ export default fp(async (fastify, options) => {
     readable.push('test');
     readable.push(null);
     reply.type('application/pdf').send(readable);
+  });
+  fastify.decorate('addLabTest', async (record: WithId<Document>, labTest: LabTest) => {
+    return {
+      acknowledged: true,
+      matchedCount: 1,
+      modifiedCount: 1,
+      upsertedCount: 0,
+      upsertedId: null
+    };
   });
 });
