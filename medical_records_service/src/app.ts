@@ -6,7 +6,13 @@ import ServerException from './models/ServerException';
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {}
 // Pass --options via CLI arguments in command to enable these options.
 const options: AppOptions = {
-  logger: true
+  logger: true,
+  ajv: {
+    customOptions: {
+      strict: true,
+      removeAdditional: false
+    }
+  }
 };
 
 const app: FastifyPluginAsync<AppOptions> = async (fastify, opts): Promise<void> => {

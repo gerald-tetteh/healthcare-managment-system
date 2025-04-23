@@ -4,6 +4,7 @@ import VisitType from '../models/VisitType';
 export const createMedicalRecordSchema: FastifySchema = {
   body: {
     type: 'object',
+    additionalProperties: false,
     required: ['patientId', 'doctorId', 'visitType', 'symptoms', 'diagnosis', 'notes'],
     properties: {
       patientId: { type: 'number' },
@@ -49,19 +50,7 @@ export const createMedicalRecordSchema: FastifySchema = {
           }
         }
       },
-      notes: { type: 'string' },
-      attachments: {
-        type: 'array',
-        items: {
-          type: 'object',
-          required: ['fileName', 'fileUrl', 'mimeType'],
-          properties: {
-            fileName: { type: 'string' },
-            fileUrl: { type: 'string' },
-            mimeType: { type: 'string' }
-          }
-        }
-      }
+      notes: { type: 'string' }
     }
   }
 };

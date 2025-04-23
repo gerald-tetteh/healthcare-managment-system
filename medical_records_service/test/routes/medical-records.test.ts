@@ -11,12 +11,16 @@ import { ObjectId } from '@fastify/mongodb';
 import FormData from 'form-data';
 import { Readable } from 'node:stream';
 import multipart from '../../src/plugins/multipart';
+import { options } from '../../src/app';
 
 describe('Medical Records', () => {
   let fastify: FastifyInstance;
 
   beforeEach(async () => {
-    fastify = Fastify();
+    fastify = Fastify({
+      ...options,
+      logger: false
+    });
     await fastify.register(jwt);
     await fastify.register(encryption);
     await fastify.register(mongoMock);
@@ -123,6 +127,31 @@ describe('Medical Records', () => {
     assert.equal(res.statusCode, 400);
     assert.equal(responseBody.title, 'Bad Request');
     assert.equal(responseBody.statusCode, 'BAD_REQUEST');
+  });
+
+  it('should fail to create record if payload contains unexpected fields', async () => {
+    const token = fastify.jwt.sign({ userId: 1, roles: ['ROLE_DOCTOR'] });
+    const res = await fastify.inject({
+      method: 'POST',
+      url: '/',
+      payload: {
+        patientId: 0,
+        doctorId: 1,
+        visitType: VisitType.InPerson,
+        symptoms: ['fever', 'cough'],
+        diagnosis: new Diagnosis('A01', 'Test Diagnosis'),
+        notes: 'This is a test medical record',
+        attachments: []
+      },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    const responseBody = JSON.parse(res.payload);
+    assert.equal(res.statusCode, 400);
+    assert.equal(responseBody.title, 'Bad Request');
+    assert.equal(responseBody.statusCode, 'BAD_REQUEST');
+    assert.equal(responseBody.message, 'body must NOT have additional properties');
   });
 
   it('should get medical record by id', async () => {
