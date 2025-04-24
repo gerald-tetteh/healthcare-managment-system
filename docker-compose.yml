@@ -56,6 +56,7 @@ services:
       - db_user=${APPOINTMENTS_DB}
       - port=8083
       - secret_key=${SECRET_KEY}
+      - kafka_address=${KAFKA_SERVER}
     networks:
       - gateway-service-network
     depends_on:
@@ -70,8 +71,10 @@ services:
       - secret_key=${SECRET_KEY}
       - encryption_key=${ENCRYPTION_KEY}
       - mongo_url=${DB_MEDICAL_RECORDS}
+      - kafka_address=${KAFKA_SERVER}
     depends_on:
       - mongo-server
+      - kafka-server
     networks:
       - gateway-service-network
 

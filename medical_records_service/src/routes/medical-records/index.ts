@@ -114,6 +114,17 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(
         `User: ${request.user.userId} added attachments to medical record with id: ${record._id}`
       );
+      fastify.kafka.send({
+        topic: fastify.topic,
+        messages: [
+          { key: "attachment",
+            value: JSON.stringify({
+              users: [record.patientId, record.doctorId],
+              data: uploadedFiles,
+            })
+          }
+        ]
+      });
       return {
         status: 'success',
         message: 'File uploaded successfully',
@@ -204,6 +215,17 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(
         `User: ${request.user.userId} added lab test to medical record with id: ${record._id}`
       );
+      fastify.kafka.send({
+        topic: fastify.topic,
+        messages: [
+          { key: 'labTest',
+            value: JSON.stringify({
+              users: [record.patientId, record.doctorId],
+              data: labTest
+            })
+          }
+        ]
+      });
       return {
         status: 'success',
         message: 'Lab test added successfully',
@@ -211,7 +233,6 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       };
     }
   );
-  // get lab tests from medical record
 };
 
 export default medicalRecords;

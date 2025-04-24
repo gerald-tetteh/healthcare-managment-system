@@ -20,7 +20,7 @@ jwt:
   expiration-time: 14400000
 
 kafka:
-  bootstrap-address: broker:29092
+  bootstrap-address: ${kafka_address}
   topic: appointment
 
 server:
