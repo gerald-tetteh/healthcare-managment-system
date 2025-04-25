@@ -1,12 +1,12 @@
 import fp from 'fastify-plugin';
-import { Kafka, Producer } from 'kafkajs';
+import { Kafka, ProducerRecord } from 'kafkajs';
 
 const KAFKA_TOPIC = "medical_records";
 
 declare module "fastify" {
   interface FastifyInstance {
     topic: string;
-    kafka: Producer;
+    publishKafka(data: ProducerRecord): Promise<void>;
   }
 }
 
@@ -18,7 +18,9 @@ const producer = kafka.producer();
 export default fp(async (fastify) => {
   fastify.addHook("onReady", async () => {
     await producer.connect();
-    fastify.decorate("kafka", producer);
+    fastify.decorate("publishKafka", async (data: ProducerRecord) => {
+      await producer.send(data);
+    });
   });
 
   fastify.addHook("onClose", async () => {

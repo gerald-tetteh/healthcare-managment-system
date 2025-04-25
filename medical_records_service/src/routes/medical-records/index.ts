@@ -12,7 +12,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       attachValidation: true,
       preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
     },
-    async function (request, reply) {
+    async function(request, reply) {
       if (request.validationError) {
         fastify.log.error(
           request.validationError,
@@ -50,7 +50,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_PATIENT'])
       ]
     },
-    async function (request, reply) {
+    async function(request, reply) {
       const recordId = (request.params as { id: string }).id;
       const record = await fastify.findOne(recordId, fastify);
       if (!record) {
@@ -84,7 +84,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     {
       preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
     },
-    async function (request, reply) {
+    async function(request, reply) {
       const recordId = (request.params as { id: string }).id;
       const record = await fastify.findOne(recordId, fastify);
       if (!record) {
@@ -114,13 +114,14 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(
         `User: ${request.user.userId} added attachments to medical record with id: ${record._id}`
       );
-      fastify.kafka.send({
+      fastify.publishKafka({
         topic: fastify.topic,
         messages: [
-          { key: "attachment",
+          {
+            key: 'attachment',
             value: JSON.stringify({
               users: [record.patientId, record.doctorId],
-              data: uploadedFiles,
+              data: uploadedFiles
             })
           }
         ]
@@ -141,7 +142,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN', 'ROLE_PATIENT'])
       ]
     },
-    async function (request, reply) {
+    async function(request, reply) {
       const recordId = (request.params as { recordId: string }).recordId;
       const attachmentId = (request.params as { id: string }).id;
       const result = await fastify.findOne(recordId, fastify);
@@ -187,7 +188,7 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       attachValidation: true,
       preHandler: [fastify.authenticate, fastify.authorizeByRole(['ROLE_DOCTOR', 'ROLE_ADMIN'])]
     },
-    async function (request, reply) {
+    async function(request, reply) {
       if (request.validationError) {
         fastify.log.error(
           request.validationError,
@@ -215,10 +216,11 @@ const medicalRecords: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       fastify.log.info(
         `User: ${request.user.userId} added lab test to medical record with id: ${record._id}`
       );
-      fastify.kafka.send({
+      fastify.publishKafka({
         topic: fastify.topic,
         messages: [
-          { key: 'labTest',
+          {
+            key: 'labTest',
             value: JSON.stringify({
               users: [record.patientId, record.doctorId],
               data: labTest

@@ -12,6 +12,7 @@ import FormData from 'form-data';
 import { Readable } from 'node:stream';
 import multipart from '../../src/plugins/multipart';
 import { options } from '../../src/app';
+import kafkaMock from '../__mocks__/kafka.mock';
 
 describe('Medical Records', () => {
   let fastify: FastifyInstance;
@@ -25,6 +26,7 @@ describe('Medical Records', () => {
     await fastify.register(encryption);
     await fastify.register(mongoMock);
     await fastify.register(multipart);
+    await fastify.register(kafkaMock);
     await fastify.register(medicalRecords);
     await fastify.ready();
   });
