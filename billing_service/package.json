@@ -1,0 +1,37 @@
+{
+  "name": "billing_service",
+  "version": "1.0.0",
+  "description": "This project was bootstrapped with Fastify-CLI.",
+  "main": "app.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "./test/scripts/test",
+    "test:start": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.ts' ! -name '*.d.ts')",
+    "start": "npm run build:ts && node dist/index.js",
+    "start:docker": "node dist/index.js",
+    "build:ts": "tsc",
+    "watch:ts": "tsc -w",
+    "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
+    "dev:start": "node --watch dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "fastify-plugin": "^5.0.0",
+    "@fastify/autoload": "^6.0.0",
+    "@fastify/sensible": "^6.0.0",
+    "fastify-cli": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.1.0",
+    "c8": "^10.1.2",
+    "ts-node": "^10.4.0",
+    "concurrently": "^9.0.0",
+    "fastify-tsconfig": "^3.0.0",
+    "typescript": "~5.8.2"
+  }
+}
