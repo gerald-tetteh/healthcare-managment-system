@@ -142,12 +142,28 @@ public class AppointmentsService {
         throw new AuthorizationDeniedException("Not authorised to perform action");
     }
 
+    public AppointmentDto completeAppointment(int appointmentId, Authentication authentication) {
+        Appointment appointment = getAppointmentById(appointmentId);
+        int userId = (int) authentication.getPrincipal();
+        if (appointment.getDoctorId() == userId) {
+            appointment.setStatus(AppointmentStatus.COMPLETED);
+            Appointment savedAppointment = appointmentsRepository.save(appointment);
+            cacheUtils.evictFromCacheByKeyMatch(
+                    "appointments", savedAppointment.getDoctorId().toString());
+            cacheUtils.evictFromCacheByKeyMatch(
+                    "appointments", savedAppointment.getPatientId().toString());
+            return this.buildAppointmentDto(savedAppointment);
+        }
+        throw new AuthorizationDeniedException("Not authorised to perform action");
+    }
+
     protected void deleteCachedAppointments(List<AppointmentDto> dtos) {
         dtos.stream()
                 .flatMap(ap -> Stream.of(ap.getDoctorId(), ap.getDoctorId()))
                 .distinct()
                 .forEach(id -> cacheUtils.evictFromCacheByKeyMatch("appointments", String.valueOf(id)));
     }
+
     protected Appointment getAppointmentById(int appointmentId) {
         return appointmentsRepository.findById(appointmentId)
                 .orElseThrow(() -> new IllegalArgumentException(

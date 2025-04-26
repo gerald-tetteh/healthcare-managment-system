@@ -99,6 +99,16 @@ public class AppointmentsController {
         return ResponseEntity.ok(dto);
     }
 
+    @PatchMapping("/{id}/complete")
+    @PreAuthorize("hasRole('DOCTOR') || hasRole('ADMIN')")
+    public ResponseEntity<AppointmentDto> completeAppointment(@PathVariable int id, Authentication authentication) throws JsonProcessingException {
+        AppointmentDto dto = appointmentsService.completeAppointment(id, authentication);
+        logger.info(String.format("doctor: %s set appointment: %d as completed",
+                authentication.getPrincipal(), dto.getAppointmentId()));
+        sendKafkaMessage("complete", dto);
+        return ResponseEntity.ok(dto);
+    }
+
     private void sendKafkaMessage(String key, Object object) throws JsonProcessingException {
         String message = mapper.writeValueAsString(object);
         kafkaTemplate.send(kafkaTopic, key, message);
