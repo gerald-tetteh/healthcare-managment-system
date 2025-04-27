@@ -145,16 +145,20 @@ public class AppointmentsService {
     public AppointmentDto completeAppointment(int appointmentId, Authentication authentication) {
         Appointment appointment = getAppointmentById(appointmentId);
         int userId = (int) authentication.getPrincipal();
-        if (appointment.getDoctorId() == userId) {
-            appointment.setStatus(AppointmentStatus.COMPLETED);
-            Appointment savedAppointment = appointmentsRepository.save(appointment);
-            cacheUtils.evictFromCacheByKeyMatch(
-                    "appointments", savedAppointment.getDoctorId().toString());
-            cacheUtils.evictFromCacheByKeyMatch(
-                    "appointments", savedAppointment.getPatientId().toString());
-            return this.buildAppointmentDto(savedAppointment);
+        if (appointment.getDoctorId() != userId) {
+            throw new AuthorizationDeniedException("Not authorised to perform action");
         }
-        throw new AuthorizationDeniedException("Not authorised to perform action");
+        LocalDateTime now = LocalDateTime.now();
+        if (appointment.getStatus() != AppointmentStatus.SCHEDULED || now.isBefore(appointment.getDateTime())) {
+            throw new IllegalArgumentException("Appointment is either not scheduled or has not occurred yet");
+        }
+        appointment.setStatus(AppointmentStatus.COMPLETED);
+        Appointment savedAppointment = appointmentsRepository.save(appointment);
+        cacheUtils.evictFromCacheByKeyMatch(
+                "appointments", savedAppointment.getDoctorId().toString());
+        cacheUtils.evictFromCacheByKeyMatch(
+                "appointments", savedAppointment.getPatientId().toString());
+        return this.buildAppointmentDto(savedAppointment);
     }
 
     protected void deleteCachedAppointments(List<AppointmentDto> dtos) {

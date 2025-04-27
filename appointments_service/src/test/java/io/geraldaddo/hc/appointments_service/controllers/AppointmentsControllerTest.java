@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.geraldaddo.hc.appointments_service.configurations.AppointmentsTestConfiguration;
 import io.geraldaddo.hc.appointments_service.dto.*;
+import io.geraldaddo.hc.appointments_service.entities.AppointmentStatus;
 import io.geraldaddo.hc.appointments_service.services.AppointmentsService;
 import io.geraldaddo.hc.security_module.exception_handlers.AuthExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -283,5 +284,30 @@ class AppointmentsControllerTest {
 
         verify(appointmentsService, times(0))
                 .rescheduleAppointment(anyInt(), any(), any());
+    }
+
+    @Test
+    void shouldCompleteAppointment() throws Exception {
+        AppointmentDto appointmentDto = AppointmentDto.builder()
+                .doctorId(0)
+                .status(AppointmentStatus.COMPLETED)
+                .build();
+        when(appointmentsService.completeAppointment(0, doctorAuthentication))
+                .thenReturn(appointmentDto);
+
+        mockMvc.perform(patch("/appointments/0/complete")
+                        .with(authentication(doctorAuthentication))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    void shouldFailToCompleteAppointmentDueToWrongAuthentication() throws Exception {
+        mockMvc.perform(patch("/appointments/0/complete")
+                        .with(authentication(wrongRoleAuthentication))
+                        .with(csrf()))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 }

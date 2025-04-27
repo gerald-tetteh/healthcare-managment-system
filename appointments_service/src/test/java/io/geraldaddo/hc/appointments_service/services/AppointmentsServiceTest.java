@@ -350,4 +350,94 @@ class AppointmentsServiceTest {
         verify(appointmentsRepository, times(1)).findById(1);
         verify(appointmentsRepository, times(0)).save(any());
     }
+
+    @Test
+    public void shouldCompleteAppointment() {
+        Appointment appointment = Appointment.builder()
+                .doctorId(0)
+                .patientId(1)
+                .status(AppointmentStatus.SCHEDULED)
+                .dateTime(LocalDateTime.now().minusHours(1))
+                .build();
+        when(appointmentsRepository.findById(0)).thenReturn(Optional.of(appointment));
+        when(appointmentsRepository.save(any(Appointment.class)))
+                .thenAnswer(i -> i.getArguments()[0]);
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                0,
+                null,
+                List.of()
+        );
+
+        AppointmentDto dto = underTest.completeAppointment(0, auth);
+
+        assertEquals(dto.getStatus(), AppointmentStatus.COMPLETED);
+
+        verify(appointmentsRepository, times(1))
+                .save(any(Appointment.class));
+        verify(appointmentsRepository, times(1))
+                .findById(0);
+    }
+
+    @Test
+    public void shouldFailToCompleteAppointmentBecauseOfWrongUserId() {
+        Appointment appointment = Appointment.builder()
+                .doctorId(0)
+                .patientId(1)
+                .status(AppointmentStatus.SCHEDULED)
+                .dateTime(LocalDateTime.now().minusHours(1))
+                .build();
+        when(appointmentsRepository.findById(0)).thenReturn(Optional.of(appointment));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                1,
+                null,
+                List.of()
+        );
+
+        assertThrows(AuthorizationDeniedException.class,
+                () -> underTest.completeAppointment(0, auth));
+
+        verify(appointmentsRepository, times(1)).findById(0);
+    }
+
+    @Test
+    public void shouldFailToCompleteAppointmentBecauseItIsNotScheduled() {
+        Appointment appointment = Appointment.builder()
+                .doctorId(0)
+                .patientId(1)
+                .status(AppointmentStatus.PENDING)
+                .dateTime(LocalDateTime.now().minusHours(1))
+                .build();
+        when(appointmentsRepository.findById(0)).thenReturn(Optional.of(appointment));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                0,
+                null,
+                List.of()
+        );
+
+        assertThrows(IllegalArgumentException.class,
+                () -> underTest.completeAppointment(0, auth));
+
+        verify(appointmentsRepository, times(1)).findById(0);
+    }
+
+    @Test
+    public void shouldFailToCompleteAppointmentBecauseAppointmentHasNotOccurred() {
+        Appointment appointment = Appointment.builder()
+                .doctorId(0)
+                .patientId(1)
+                .status(AppointmentStatus.SCHEDULED)
+                .dateTime(LocalDateTime.now().plusHours(1))
+                .build();
+        when(appointmentsRepository.findById(0)).thenReturn(Optional.of(appointment));
+        Authentication auth = new UsernamePasswordAuthenticationToken(
+                0,
+                null,
+                List.of()
+        );
+
+        assertThrows(IllegalArgumentException.class,
+                () -> underTest.completeAppointment(0, auth));
+
+        verify(appointmentsRepository, times(1)).findById(0);
+    }
 }
