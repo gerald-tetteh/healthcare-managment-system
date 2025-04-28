@@ -15,5 +15,5 @@ COPY --from=build /src/node_modules /src/node_modules
 COPY --from=build /src/package*.json /src/
 WORKDIR /src
 
-EXPOSE 8084
+EXPOSE 8085
 ENTRYPOINT [ "npm", "run", "start:docker" ]

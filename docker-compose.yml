@@ -60,8 +60,10 @@ services:
     networks:
       - gateway-service-network
     depends_on:
-      - app-db
-      - kafka-server
+      app-db:
+        condition: service_started
+      kafka-server:
+        condition: service_healthy
   medical-records-service:
     container_name: medical-records-service
     build:
@@ -73,10 +75,30 @@ services:
       - mongo_url=${DB_MEDICAL_RECORDS}
       - kafka_address=${KAFKA_SERVER}
     depends_on:
-      - mongo-server
-      - kafka-server
+      mongo-server:
+        condition: service_started
+      kafka-server:
+        condition: service_healthy
     networks:
       - gateway-service-network
+  billing-service:
+    container_name: billing-service
+    build:
+      context: billing_service
+    environment:
+      - port=8085
+      - secret_key=${SECRET_KEY}
+      - encryption_key=${ENCRYPTION_KEY}
+      - mongo_url=${DB_MEDICAL_RECORDS}
+      - kafka_address=${KAFKA_SERVER}
+    depends_on:
+      mongo-server:
+        condition: service_started
+      kafka-server:
+        condition: service_healthy
+    networks:
+      - gateway-service-network
+
 
   app-db:
     container_name: app-db
@@ -125,6 +147,11 @@ services:
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     networks:
       - gateway-service-network
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "nc -z localhost 9092" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 networks:
   gateway-service-network:
