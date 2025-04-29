@@ -23,6 +23,10 @@ declare module "fastify" {
 export default fp(async (fastify, options) => {
     fastify.register(jwt, {
         secret: Buffer.from(process.env.secret_key!, "base64"),
+        sign: {
+            algorithm: "HS384",
+            expiresIn: "4h",
+        }
     });
 
     fastify.decorate(

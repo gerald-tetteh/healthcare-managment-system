@@ -3,39 +3,45 @@ import {ObjectId} from "@fastify/mongodb";
 import BillStatus from "./BillStatus";
 import BillItem from "./BillItem";
 
+interface IBill {
+    _id?: string,
+    patientId: Number,
+    status?: BillStatus,
+    items: BillItem[],
+    paidAt?: Date,
+    createdAt?: Date,
+    updatedAt?: Date,
+}
+
 class Bill implements MongoDocument {
-    _id: ObjectId | undefined;
+    _id?: ObjectId;
     status: BillStatus;
+    patientId: Number;
     items: BillItem[];
-    paidAt: Date;
+    paidAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 
-    constructor(
-        _id: string,
-        status: BillStatus,
-        items: BillItem[],
-        paidAt: Date,
-        createdAt: Date = new Date(),
-        updatedAt: Date = new Date(),
-    ) {
-        this._id = _id ? new ObjectId(_id) : undefined;
-        this.items = items;
-        this.status = status;
-        this.items = items;
-        this.paidAt = paidAt;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
+    constructor(obj: IBill) {
+        this._id = obj._id ? new ObjectId(obj._id) : undefined;
+        this.items = obj.items ?? [];
+        this.status = obj.status ?? BillStatus.PENDING;
+        this.patientId = obj.patientId;
+        this.paidAt = obj.paidAt;
+        this.createdAt = obj.createdAt ?? new Date();
+        this.updatedAt = obj.updatedAt ?? new Date();
     }
 
     static fromJson(json:any): Bill {
-        return new Bill(
-            json.id,
-            BillStatus[json.visitType as keyof typeof BillStatus],
-            json.items,
-            json.paidAt,
-            json.createdAt ? new Date(json.createdAt) : new Date(),
-        );
+        return new Bill({
+            _id: json.id,
+            status: BillStatus[json.visitType as keyof typeof BillStatus],
+            patientId: json.patientId,
+            items: json.items,
+            paidAt: json.paidAt,
+            createdAt: json.createdAt,
+            updatedAt: json.updatedAt,
+        });
     }
 }
 

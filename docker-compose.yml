@@ -89,7 +89,7 @@ services:
       - port=8085
       - secret_key=${SECRET_KEY}
       - encryption_key=${ENCRYPTION_KEY}
-      - mongo_url=${DB_MEDICAL_RECORDS}
+      - mongo_url=${DB_BILLING}
       - kafka_address=${KAFKA_SERVER}
     depends_on:
       mongo-server:
