@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "./test/scripts/test",
+    "test": "jest",
     "test:start": "npm run build:ts && tsc -p test/tsconfig.json && c8 node --test -r ts-node/register $(find test -name '*.ts' ! -name '*.d.ts')",
     "start": "npm run build:ts && node dist/index.js",
     "start:docker": "node dist/index.js",
@@ -27,15 +27,18 @@
     "fastify": "^5.0.0",
     "fastify-cli": "^7.4.0",
     "fastify-plugin": "^5.0.0",
-    "got": "^14.4.7",
+    "got": "^11.8.6",
     "kafkajs": "^2.2.4"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@types/got": "^9.6.12",
     "@types/node": "^22.1.0",
     "c8": "^10.1.2",
     "concurrently": "^9.0.0",
     "fastify-tsconfig": "^3.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.2",
     "ts-node": "^10.4.0",
     "typescript": "~5.8.2"
   }
