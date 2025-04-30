@@ -6,6 +6,7 @@ import BillItem from "./BillItem";
 interface IBill {
     _id?: string,
     patientId: Number,
+    appointmentId: Number,
     status?: BillStatus,
     items: BillItem[],
     paidAt?: Date,
@@ -17,6 +18,7 @@ class Bill implements MongoDocument {
     _id?: ObjectId;
     status: BillStatus;
     patientId: Number;
+    appointmentId: Number;
     items: BillItem[];
     paidAt?: Date;
     createdAt: Date;
@@ -27,6 +29,7 @@ class Bill implements MongoDocument {
         this.items = obj.items ?? [];
         this.status = obj.status ?? BillStatus.PENDING;
         this.patientId = obj.patientId;
+        this.appointmentId = obj.appointmentId;
         this.paidAt = obj.paidAt;
         this.createdAt = obj.createdAt ?? new Date();
         this.updatedAt = obj.updatedAt ?? new Date();
@@ -37,6 +40,7 @@ class Bill implements MongoDocument {
             _id: json.id,
             status: BillStatus[json.visitType as keyof typeof BillStatus],
             patientId: json.patientId,
+            appointmentId: json.appointmentId,
             items: json.items,
             paidAt: json.paidAt,
             createdAt: json.createdAt,

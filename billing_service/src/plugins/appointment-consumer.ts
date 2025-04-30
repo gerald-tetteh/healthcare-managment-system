@@ -20,7 +20,7 @@ export default fp(async (fastify) => {
             topic: "appointment",
         });
 
-        await consumer.run({
+        consumer.run({
             autoCommit: false,
             eachMessage: async ({message, topic, partition}) => {
                 const token = fastify.jwt.sign({
@@ -38,14 +38,26 @@ export default fp(async (fastify) => {
                         }).json();
                         const bill = new Bill({
                             patientId: appointment.patientId,
+                            appointmentId: appointment.appointmentId,
                             items: [{
                                 type: BillItemType.APPOINTMENT,
                                 price: doctorProfile.consultationFee,
                                 identifier: "Appointment"
                             }],
                         });
-                        await fastify.createBill(bill);
-                        fastify.log.info(`Created bill for appointment: ${appointment.appointmentId}`);
+                        const result = await fastify.createBill(bill);
+                        fastify.log.info(`Created bill: ${result?.insertedId} for appointment: ${appointment.appointmentId}`);
+                        await fastify.publishKafka({
+                            topic: "bill",
+                            messages: [{
+                                key: "create",
+                                value: JSON.stringify({
+                                    users: [appointment.doctorId, appointment.patientId],
+                                    data: bill
+                                }),
+                            }],
+                        });
+                        fastify.log.info(`Published kafka message for bill: ${result?.insertedId}`);
                         const commitOffset = Number(message.offset) + 1;
                         await consumer.commitOffsets([{
                             topic: topic,

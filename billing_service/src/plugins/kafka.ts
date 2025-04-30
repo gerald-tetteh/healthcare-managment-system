@@ -1,6 +1,12 @@
 import {Kafka, ProducerRecord} from "kafkajs";
 import fp from "fastify-plugin";
 
+declare module "fastify" {
+    interface FastifyInstance {
+        publishKafka(message: ProducerRecord): Promise<void>;
+    }
+}
+
 const KAFKA_TOPIC = "billing_service";
 const kafka = new Kafka({
     brokers: [process.env.kafka_address!],
@@ -21,4 +27,5 @@ export default fp(async (fastify) => {
 
     fastify.decorate("topic", KAFKA_TOPIC);
 });
+
 export { kafka };
