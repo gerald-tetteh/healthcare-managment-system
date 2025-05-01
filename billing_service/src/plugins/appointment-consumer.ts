@@ -41,8 +41,8 @@ const consumeMessage = async (payload: EachMessagePayload, fastify: FastifyInsta
             });
             const result = await fastify.createBill(bill);
             fastify.log.info(`Created bill: ${result?.insertedId} for appointment: ${appointment.appointmentId}`);
-            await fastify.publishKafka({
-                topic: "bill",
+            fastify.publishKafka({
+                topic: fastify.topic,
                 messages: [{
                     key: "create",
                     value: JSON.stringify({
@@ -50,8 +50,7 @@ const consumeMessage = async (payload: EachMessagePayload, fastify: FastifyInsta
                         data: bill
                     }),
                 }],
-            });
-            fastify.log.info(`Published kafka message for bill: ${result?.insertedId}`);
+            }).then(() => fastify.log.info(`Published kafka message for bill: ${result?.insertedId}`));
             const commitOffset = Number(payload.message.offset) + 1;
             await consumer.commitOffsets([{
                 topic: payload.topic,

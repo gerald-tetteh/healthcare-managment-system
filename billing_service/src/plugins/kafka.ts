@@ -8,7 +8,7 @@ declare module "fastify" {
     }
 }
 
-const KAFKA_TOPIC = "billing_service";
+const KAFKA_TOPIC = "bill";
 const kafka = new Kafka({
     brokers: [process.env.kafka_address!],
 });
