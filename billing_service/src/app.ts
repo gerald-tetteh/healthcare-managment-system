@@ -1,6 +1,7 @@
 import { join } from 'node:path'
 import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
 import { FastifyPluginAsync, FastifyServerOptions } from 'fastify'
+import ServerException from "./models/ServerException";
 
 export interface AppOptions extends FastifyServerOptions, Partial<AutoloadPluginOptions> {
 
@@ -21,6 +22,22 @@ const app: FastifyPluginAsync<AppOptions> = async (
   opts
 ): Promise<void> => {
   // Place here your custom code!
+  fastify.setErrorHandler((error, request, reply) => {
+    if (error instanceof ServerException) {
+      reply.status(500).send({
+        title: 'Internal Server Error',
+        message: error.message,
+        statusCode: 500
+      });
+      return;
+    }
+    fastify.log.error(error, 'Server exception occurred');
+    reply.status(500).send({
+      title: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+      statusCode: 'INTERNAL_SERVER_ERROR'
+    });
+  });
 
   // Do not touch the following lines
 
