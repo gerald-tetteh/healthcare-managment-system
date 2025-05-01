@@ -4,6 +4,7 @@ import fp from "fastify-plugin";
 declare module "fastify" {
     interface FastifyInstance {
         publishKafka(message: ProducerRecord): Promise<void>;
+        topic: string;
     }
 }
 
