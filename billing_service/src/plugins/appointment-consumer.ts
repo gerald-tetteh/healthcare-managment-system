@@ -61,7 +61,7 @@ const consumeMessage = async (payload: EachMessagePayload, fastify: FastifyInsta
             fastify.log.info(`Committed offset ${commitOffset} of topic ${payload.topic}`);
         } catch (error) {
             fastify.log.error(error, "Could not process appointment bill")
-            throw new ServerException("Could not procces appointment bill", 500);
+            throw new ServerException("Could not process appointment bill", 500);
         }
     } else {
         const commitOffset = Number(payload.message.offset) + 1;

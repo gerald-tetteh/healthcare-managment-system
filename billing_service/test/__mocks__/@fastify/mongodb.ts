@@ -1,5 +1,13 @@
 import fp from "fastify-plugin";
 import { OptionalId, Document, InsertOneOptions, InsertOneResult, ObjectId } from "mongodb";
+import { jest } from "@jest/globals";
+
+type insertOneType = (doc: OptionalId<Document>, options?: InsertOneOptions) => Promise<InsertOneResult>;
+
+const mockInsertOne = jest.fn<insertOneType>().mockResolvedValue({
+    insertedId: new ObjectId(),
+    acknowledged: true,
+});
 
 export default fp(async (fastify) => {
     fastify.decorate("mongo", {
@@ -7,14 +15,11 @@ export default fp(async (fastify) => {
             // @ts-ignore
             collection: (name: string) => {
                 return {
-                    insertOne: async (doc: OptionalId<Document>, options?: InsertOneOptions) => {
-                        return Promise.resolve(<InsertOneResult>{
-                            insertedId: new ObjectId(),
-                            acknowledged: true,
-                        });
-                    }
+                    insertOne: mockInsertOne,
                 }
             }
         }
     });
 });
+
+export { mockInsertOne };
