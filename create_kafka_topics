@@ -2,3 +2,4 @@
 
 ./kafka-topics.sh --create --topic appointment --bootstrap-server broker:29092
 ./kafka-topics.sh --create --topic medical_records --bootstrap-server broker:29092
+./kafka-topics.sh --create --topic bill --bootstrap-server broker:29092
