@@ -1,7 +1,7 @@
 import MongoDocument from "./MongoDocument";
-import {ObjectId} from "@fastify/mongodb";
 import BillStatus from "./BillStatus";
 import BillItem from "./BillItem";
+import {Document, WithId, ObjectId} from "mongodb";
 
 interface IBill {
     _id?: string,
@@ -45,6 +45,19 @@ class Bill implements MongoDocument {
             paidAt: json.paidAt,
             createdAt: json.createdAt,
             updatedAt: json.updatedAt,
+        });
+    }
+
+    static fromDocument(doc: WithId<Document>): Bill {
+        return new Bill({
+            appointmentId: doc.appointmentId,
+            items: doc.items,
+            createdAt: doc.createdAt,
+            paidAt: doc.paidAt,
+            patientId: doc.patientId,
+            status: doc.status,
+            updatedAt: doc.updatedAt,
+            _id: doc._id.toString(),
         });
     }
 }

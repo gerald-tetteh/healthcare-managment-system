@@ -6,8 +6,9 @@ import jwt from "../../src/plugins/jwt";
 import kafkaPlugin from "../../src/plugins/kafka";
 import mongoPlugin from "../../src/plugins/mongo";
 import {mockJwtVerify} from "../__mocks__/@fastify/jwt";
-import {mockInsertOne} from "../__mocks__/@fastify/mongodb";
+import {mockFindOne, mockInsertOne} from "../__mocks__/@fastify/mongodb";
 import {mockSend} from "../__mocks__/kafkajs";
+import {ObjectId} from "mongodb";
 
 describe("Billing Service tests", () => {
     let fastify: FastifyInstance;
@@ -127,5 +128,23 @@ describe("Billing Service tests", () => {
         expect(responseBody.title).toEqual("Bad Request");
         expect(responseBody.message).toBeDefined();
         expect(responseBody.statusCode).toEqual("BAD_REQUEST");
+    });
+
+    it("should get bill", async () => {
+        await fastify.ready();
+        const id = new ObjectId();
+        const result = await fastify.inject({
+            method: "GET",
+            url: `/${id}`,
+            headers: {
+                "Authorization": "Bearer test-token",
+            }
+        });
+
+        expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+        expect(mockFindOne).toHaveBeenCalledTimes(1);
+        const responseBody = result.json();
+        expect(result.statusCode).toEqual(200);
+        expect(responseBody._id).toBeDefined();
     });
 });

@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import {createBillSchema} from "../../schemas/schemas";
 import Bill from "../../models/Bill";
+import {ObjectId} from "mongodb";
 
 const billingService: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
   fastify.post('/', {
@@ -40,6 +41,36 @@ const billingService: FastifyPluginAsync = async (fastify, opts): Promise<void> 
         insertedId: result?.insertedId,
       }
     }
+  });
+
+  fastify.get("/:id", {
+    preHandler: [fastify.authenticate, fastify.authorizeByRole(["ROLE_PATIENT","ROLE_ADMIN"])],
+  }, async (request, reply) => {
+    const inputId = (request.params as { id: string }).id;
+    const billId = new ObjectId(inputId);
+    const document = await fastify.getBill(billId);
+    if(!document) {
+      reply.status(404).send({
+        title: 'Record Not Found',
+        message: 'The requested item does not exist',
+        statusCode: 'NOT_FOUND'
+      });
+      fastify.log.warn(`User ${request.user.userId} requested a non-existent document: ${inputId}`);
+      return;
+    }
+    const bill = Bill.fromDocument(document);
+    const isPatient = request.user.roles.includes("ROLE_PATIENT");
+    if(isPatient && bill.patientId != request.user.userId) {
+      reply.status(403).send({
+        title: 'Authorization Failed',
+        message: 'Cannot access this resource',
+        statusCode: 'FORBIDDEN'
+      });
+      fastify.log.warn(`User ${request.user.userId} tried to access unowned bill: ${inputId}`);
+      return;
+    }
+    fastify.log.info(`User ${request.user.userId} accessed bill ${billId}`);
+    return bill;
   });
 };
 
