@@ -51,7 +51,7 @@ const billingService: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     const document = await fastify.getBill(billId);
     if(!document) {
       reply.status(404).send({
-        title: 'Record Not Found',
+        title: 'Bill Not Found',
         message: 'The requested item does not exist',
         statusCode: 'NOT_FOUND'
       });
@@ -59,8 +59,8 @@ const billingService: FastifyPluginAsync = async (fastify, opts): Promise<void> 
       return;
     }
     const bill = Bill.fromDocument(document);
-    const isPatient = request.user.roles.includes("ROLE_PATIENT");
-    if(isPatient && bill.patientId != request.user.userId) {
+    const isAdmin = request.user.roles.includes("ROLE_ADMIN");
+    if(!isAdmin && bill.patientId != request.user.userId) {
       reply.status(403).send({
         title: 'Authorization Failed',
         message: 'Cannot access this resource',

@@ -5,8 +5,8 @@ import billingService from "../../src/routes/billing-service";
 import jwt from "../../src/plugins/jwt";
 import kafkaPlugin from "../../src/plugins/kafka";
 import mongoPlugin from "../../src/plugins/mongo";
-import {mockJwtVerify} from "../__mocks__/@fastify/jwt";
-import {mockFindOne, mockInsertOne} from "../__mocks__/@fastify/mongodb";
+import {mockJwtVerify, setInvalidUser} from "../__mocks__/@fastify/jwt";
+import {mockFindOne, mockInsertOne, unAuthorizedId, unknownId} from "../__mocks__/@fastify/mongodb";
 import {mockSend} from "../__mocks__/kafkajs";
 import {ObjectId} from "mongodb";
 
@@ -146,5 +146,45 @@ describe("Billing Service tests", () => {
         const responseBody = result.json();
         expect(result.statusCode).toEqual(200);
         expect(responseBody._id).toBeDefined();
+    });
+
+    it("should return a 404 error if the bill doesn't exist", async () => {
+        await fastify.ready();
+        const result = await fastify.inject({
+            method: "GET",
+            url: `/${unknownId}`,
+            headers: {
+                "Authorization": "Bearer test-token",
+            }
+        });
+
+        expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+        expect(mockFindOne).toHaveBeenCalledTimes(1);
+        const responseBody = result.json();
+        expect(result.statusCode).toEqual(404);
+        expect(responseBody.title).toEqual("Bill Not Found");
+        expect(responseBody.message).toEqual("The requested item does not exist");
+        expect(responseBody.statusCode).toEqual("NOT_FOUND");
+    });
+
+    it("should return a 403 error if user doesn't own bill", async () => {
+        setInvalidUser();
+
+        await fastify.ready();
+        const result = await fastify.inject({
+            method: "GET",
+            url: `/${unAuthorizedId}`,
+            headers: {
+                "Authorization": "Bearer test-token",
+            }
+        });
+
+        expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+        expect(mockFindOne).toHaveBeenCalledTimes(1);
+        const responseBody = result.json();
+        expect(result.statusCode).toEqual(403);
+        expect(responseBody.title).toEqual("Authorization Failed");
+        expect(responseBody.message).toEqual("Cannot access this resource");
+        expect(responseBody.statusCode).toEqual("FORBIDDEN");
     });
 });
