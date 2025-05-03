@@ -6,7 +6,14 @@ import jwt from "../../src/plugins/jwt";
 import kafkaPlugin from "../../src/plugins/kafka";
 import mongoPlugin from "../../src/plugins/mongo";
 import {mockJwtVerify, setInvalidUser} from "../__mocks__/@fastify/jwt";
-import {mockFindOne, mockInsertOne, unAuthorizedId, unknownId} from "../__mocks__/@fastify/mongodb";
+import {
+    mockFindOne,
+    mockInsertOne,
+    mockUpdateOne,
+    notPendingId,
+    unAuthorizedId,
+    unknownId
+} from "../__mocks__/@fastify/mongodb";
 import {mockSend} from "../__mocks__/kafkajs";
 import {ObjectId} from "mongodb";
 
@@ -226,6 +233,161 @@ describe("Billing Service tests", () => {
 
     describe("Update bill tests", () => {
         it("should update bill", async () => {
+            await fastify.ready();
+            const result = await fastify.inject({
+                method: "PATCH",
+                url: `/${new ObjectId()}`,
+                body: {
+                    patientId: 1,
+                    appointmentId: 2,
+                    items: [
+                        {
+                            type: "APPOINTMENT",
+                            price: 100.45,
+                            identifier: "consultation",
+                        }
+                    ],
+                },
+                headers: {
+                    "Authorization": "Bearer test-token",
+                }
+            });
+
+            expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+            expect(mockFindOne).toHaveBeenCalledTimes(1);
+            expect(mockUpdateOne).toHaveBeenCalledTimes(1);
+            const responseBody = result.json();
+            expect(result.statusCode).toEqual(200);
+            expect(responseBody.status).toEqual("success");
+            expect(responseBody.message).toEqual("Bill updated successfully");
+            expect(responseBody.data.bill).toBeDefined();
+        });
+
+        it("should fail to update bill due to validation errors", async () => {
+            await fastify.ready();
+            const result = await fastify.inject({
+                method: "PATCH",
+                url: `/${new ObjectId()}`,
+                body: {
+                    patientId: 1,
+                    doctorId: 2,
+                    appointmentId: 2,
+                    items: [
+                        {
+                            type: "APPOINTMENT",
+                            price: 100.45,
+                            identifier: "consultation",
+                        }
+                    ],
+                },
+                headers: {
+                    "Authorization": "Bearer test-token",
+                }
+            });
+
+            expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+            expect(mockFindOne).toHaveBeenCalledTimes(0);
+            expect(mockUpdateOne).toHaveBeenCalledTimes(0);
+            const responseBody = result.json();
+            expect(result.statusCode).toEqual(400);
+            expect(responseBody.title).toEqual("Bad Request");
+            expect(responseBody.message).toBeDefined();
+            expect(responseBody.statusCode).toEqual("BAD_REQUEST");
+        });
+
+        it("should return 404 error if bill doesn't exist", async () => {
+            await fastify.ready();
+            const result = await fastify.inject({
+                method: "PATCH",
+                url: `/${unknownId}`,
+                body: {
+                    patientId: 1,
+                    appointmentId: 2,
+                    items: [
+                        {
+                            type: "APPOINTMENT",
+                            price: 100.45,
+                            identifier: "consultation",
+                        }
+                    ],
+                },
+                headers: {
+                    "Authorization": "Bearer test-token",
+                }
+            });
+
+            expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+            expect(mockFindOne).toHaveBeenCalledTimes(1);
+            expect(mockUpdateOne).toHaveBeenCalledTimes(0);
+            const responseBody = result.json();
+            expect(result.statusCode).toEqual(404);
+            expect(responseBody.title).toEqual("Bill Not Found");
+            expect(responseBody.message).toEqual("The requested item does not exist");
+            expect(responseBody.statusCode).toEqual("NOT_FOUND");
+        });
+
+        it("should fail to update bill if it is not pending", async () => {
+            await fastify.ready();
+            const result = await fastify.inject({
+                method: "PATCH",
+                url: `/${notPendingId}`,
+                body: {
+                    patientId: 1,
+                    appointmentId: 2,
+                    items: [
+                        {
+                            type: "APPOINTMENT",
+                            price: 100.45,
+                            identifier: "consultation",
+                        }
+                    ],
+                },
+                headers: {
+                    "Authorization": "Bearer test-token",
+                }
+            });
+
+            expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+            expect(mockFindOne).toHaveBeenCalledTimes(1);
+            expect(mockUpdateOne).toHaveBeenCalledTimes(0);
+            const responseBody = result.json();
+            expect(result.statusCode).toEqual(400);
+            expect(responseBody.title).toEqual("Bad Request");
+            expect(responseBody.message).toEqual("Bill can not be modified");
+            expect(responseBody.statusCode).toEqual("BAD_REQUEST");
+        });
+
+        it("should fail to update bill if mongo fails to update", async () => {
+            mockUpdateOne.mockResolvedValueOnce(undefined);
+
+            await fastify.ready();
+            const result = await fastify.inject({
+                method: "PATCH",
+                url: `/${new ObjectId()}`,
+                body: {
+                    patientId: 1,
+                    appointmentId: 2,
+                    items: [
+                        {
+                            type: "APPOINTMENT",
+                            price: 100.45,
+                            identifier: "consultation",
+                        }
+                    ],
+                },
+                headers: {
+                    "Authorization": "Bearer test-token",
+                }
+            });
+
+            expect(mockJwtVerify).toHaveBeenCalledTimes(1);
+            expect(mockFindOne).toHaveBeenCalledTimes(1);
+            expect(mockUpdateOne).toHaveBeenCalledTimes(1);
+            const responseBody = result.json();
+            expect(result.statusCode).toEqual(500);
+            expect(responseBody.title).toEqual("Server Error");
+            expect(responseBody.message).toEqual("Could not update bill");
+            expect(responseBody.statusCode).toEqual("INTERNAL_SERVER_ERROR");
         });
     });
 });
