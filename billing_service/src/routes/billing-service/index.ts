@@ -24,6 +24,14 @@ const billingService: FastifyPluginAsync = async (fastify, opts): Promise<void> 
     }
     const bill = Bill.fromJson(request.body);
     const result = await fastify.createBill(bill);
+    if (!result) {
+      reply.status(500).send({
+        title: 'Server Error',
+        message: "Could not create bill",
+        statusCode: "INTERNAL_SERVER_ERROR",
+      });
+      return;
+    }
     fastify.log.info(`User: ${request.user.userId} inserted a new bill with id ${result?.insertedId}`);
     fastify.publishKafka({
       topic: fastify.topic,

@@ -1,8 +1,8 @@
 import fp from "fastify-plugin";
-import { OptionalId, Document, InsertOneOptions, InsertOneResult, ObjectId, Filter, WithId } from "mongodb";
-import { jest } from "@jest/globals";
+import {Document, Filter, InsertOneOptions, InsertOneResult, ObjectId, OptionalId, WithId} from "mongodb";
+import {jest} from "@jest/globals";
 
-type insertOneType = (doc: OptionalId<Document>, options?: InsertOneOptions) => Promise<InsertOneResult>;
+type insertOneType = (doc: OptionalId<Document>, options?: InsertOneOptions) => Promise<InsertOneResult | undefined>;
 type findOneType = (filter: Filter<Document>) => Promise<WithId<Document> | undefined | null>;
 
 const unknownId = new ObjectId();
