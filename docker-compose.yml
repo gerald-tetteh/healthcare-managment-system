@@ -98,6 +98,18 @@ services:
         condition: service_healthy
     networks:
       - gateway-service-network
+  notification-service:
+    container_name: notification-service
+    build:
+      context: notification_service
+    environment:
+      - port=8086
+      - kafka_address=${KAFKA_SERVER}
+    depends_on:
+      kafka-server:
+        condition: service_healthy
+    networks:
+      - gateway-service-network
 
 
   app-db:

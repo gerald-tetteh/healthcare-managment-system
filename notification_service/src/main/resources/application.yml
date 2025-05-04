@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: appointments-service
+
+kafka:
+  bootstrap-address: ${kafka_address}
+
+server:
+  port: ${port}
